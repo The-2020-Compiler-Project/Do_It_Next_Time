@@ -1,0 +1,309 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+typedef struct PFINFL *PF;
+typedef struct SYNBL *SY;
+typedef struct TAPEL *TA;
+typedef struct AINFL *AI;
+
+typedef struct SYNBL //符号表总表
+{
+    char name[5]={'\0'};
+    char typ [5]={'\0'};
+    char cat [5]={'\0'};
+    int  addr[2];//变量的地址
+    PF p;//函数表的地址
+    TA t;     //类型表，有数组时需要填
+    int consl;   //常量的值
+    int length;  //数组的长度
+    struct SYNBL *next,*prior;
+}SYNBL,*SY;
+
+typedef struct PFINFL //函数表
+{
+    int Level;  //函数在第几层
+    int Off;    //区距
+    int Fn;     //变量数
+    SY Param;   //每个函数对应的变量的信息
+    addr；      //入口地址
+    struct PFINFL *next;
+}PFINFL,*PF;
+
+typedef struct TAPEL //类型表
+{
+    char type; //类型
+    AI p;   //如果是数组型就继续填数组表
+    struct TAPEL *next;
+}TAPEL,*TA;
+
+typedef struct AINFL //数组表
+{
+    int low; //数组下界
+    int up;  //数组上界
+    AI a; //填写单元类型
+    int clen; //每个单元占的长度
+    struct AINFL *next;
+}AINFL,*AI;
+
+void 填写总表(char name[],char typ[],char cat[],int addr[])
+{
+    strcpy(SYNBL.name,name);
+    strcpy(SYNBL.typ,typ);
+    strcpy(SYNBL.cat,cat);
+    strcpy(SYNBL.addr,addr);
+}
+typedef struct queen
+{
+    SYNBL *first;
+    SYNBL *last;    
+};
+vector <SY> s;
+vector <PF> p;
+vector <char> cal;
+SYNBL *a;//初始化前后指针
+PFINFL *b;
+int lv=1;//函数层数
+int program()// 程序
+{
+    out_statement();
+}
+int out_statement()//外部声明
+{
+    func_def();
+}
+int func_def()//函数定义
+{
+    b=(PFINFL*)malloc(sizeof(PFINFL));
+    type_explanation();
+    //填写部分函数表
+    strcpy(s.back()->typ,"f");
+    s.back()->p=b;
+    p->push_back(b);
+    b->Level=lv;
+    if(标识符())
+        strcpy(s.back()->name,);
+    else exit(0); 
+    if (界符[excel.num]!='(')
+        exit(0);
+    //函数声明();
+    if (界符[excel.num]!=')')
+        exit(0);
+    if (界符[excel.num]!='{')
+        exit(0);
+    complex_sentence();
+    if (界符[excel.num]!='}')
+        exit(0);  
+}
+int type_explanation()//类型说明
+{
+    a=(SYNBL *)malloc(sizeof(SYNBL));
+    s.push_back(a);
+    a->prior=a;
+    a=a->next;
+    a->next=NULL;
+    if(strcmp("void",))
+        {            
+            strcpy(s.back()->name,"void");
+            return 1;
+        }
+    else if(strcmp("int",))
+        {
+            strcpy(s.back()->name,"int");
+            return 1;
+        }
+    else if(strcmp("char",))
+        {
+            strcpy(s.back()->name,"char");
+            return 1;
+        }
+    else if(strcmp("float",))
+        {
+            strcpy(s.back()->name,"float");
+            return 1;
+        }
+    else return 0;
+}
+void func_def()
+{
+    
+}
+int complex_sentence()//复合语句
+{
+    if(!sentence_list());
+        {
+            if(!statement_list())
+                exit(0);
+            if(!sentence_list())
+                return 0;
+        }
+    return 1;
+}
+void sentence_list()//语句列表
+{
+    sentence();
+}
+void statement_list()//声明列表
+{
+    if (!type_explanation())
+        return 0;
+    声明();
+     if(!strcmp(";",))
+        exit(0);
+    声明列表1();//是否要return
+}
+void statement_list1()//声明列表1
+{
+    if(!statement_list())
+        return 0;
+}
+int statement()//声明
+{
+    if(!直接说明符())
+        return 0;
+    return 1;
+}
+int direct_description()//直接说明符
+{
+    if(!标识符)
+        exit(0);
+    if(!direct_description1());
+        return 0;
+    return 1;
+}
+int direct_description1()//直接说明符1
+{
+    if(strcmp(",",))
+        {
+            if(!标识符)
+                exit(0);
+            if(!direct_description1())
+                return 0;
+            return 1;
+        }
+    if(!strcmp("[",))
+    {
+        strcpy(s.back()->typ,a->prior->typ);
+        strcpy(s.back()->name,);
+        strcpy(s.back()->cat,"v");
+        a->prior=a;
+        a=a->next;
+        a->next=NULL;
+        return 0;
+    }
+    if(!常数表达式)
+        exit(0);
+    if(!strcmp("]",))
+        exit(0);
+    strcpy(s.back()->typ,a->prior->typ);
+    strcpy(s.back()->name,);
+    strcpy(s.back()->cat,"a");
+    a->prior=a;
+    a=a->next;
+    a->next=NULL;
+    直接说明符1();
+    return 1;
+}
+int sentence()//语句
+{
+    if(complex_sentence()||express()|<选择语句>|<循环语句>|<跳跃语句>)
+        return 1
+    return 0;
+}
+int express()//表达式
+{
+    assignment()
+}
+int assignment()//赋值表达式
+{
+    if(PLUS())
+        return 1;
+    if(!BASE())
+        return 0;
+    if(!数值操作符())
+        return 0;
+    if(!assignment())
+        return 0;
+    return 1;
+}
+int PLUS()
+{
+    if(!TIMES())
+        return 0;
+    if(!PLUS1())
+        return 0;
+    return 1;
+}
+int PLUS1()
+{
+    if('+')
+    {
+        if(!TIMES())
+            exit(0);
+        if(!PLUS1())
+            exit(0);
+        return 1;
+    }
+    else if('-')
+    {
+        if(!TIMES())
+            exit(0);
+        if(!PLUS1())
+            exit(0);
+        return 1;
+    }
+    else return 1;
+}
+int TIMES()
+{
+    if(!BASE())
+        return 0;
+    if(!TIMES1())
+        return 0;
+    return 1;
+}
+int TIMES1()
+{
+    if('*')
+    {
+        if(!BASE())
+            exit(0);
+        if(!TIMES1())
+            exit(0);
+        return 1;
+    }
+    else if('/')
+    {
+        if(!BASE())
+            exit(0);
+        if(!TIMES1())
+            exit(0);
+        return 1;
+    }
+    else if('%')
+    {
+        if(!BASE())
+            exit(0);
+        if(!TIMES1())
+            exit(0);
+        return 1;
+    }
+    else return 1;
+}
+int BASE()
+{
+    if(标识符())
+        return 1;
+    if(常量())
+        return 1;
+    if(字符串())
+        return 1;
+    if('(')
+        {
+            if(!表达式())
+                exit(0);
+            if(!')')
+                exit(0);
+        }
+    return 0; 
+}
