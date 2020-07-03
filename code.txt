@@ -8,6 +8,9 @@ using namespace std;
 #define _CRT_SECURE_NO_DEPRECATE
 #define _CRT_SECURE_NO_WARNINGS
 #pragma warning(disable:4996)
+void Quaternary_finish();
+void Quaternary_write();
+void judge_write();
 int sentence_list1();
 int program();
 int out_statement();
@@ -41,18 +44,25 @@ struct excel//存储输出token序列的结构体
     excel* next;
 };
 excel* p; //token串头指针
-
+typedef struct Quaternary
+{
+    char c;
+    string ta;
+    string tb;
+    string tc;
+    struct Quaternary* next;
+} Quaternary, * quater;
 typedef struct SYNBL //符号表总表
 {
     string name;
     string typ;
     string cat;
     int  addr[2];//变量的地址
-    PF p=NULL;//函数表的地址
-    TA t=NULL;     //类型表，有数组时需要填
+    PF p = NULL; //函数表的地址
+    TA t = NULL;   //类型表，有数组时需要填
     int consl;   //常量的值
     int length;  //数组的长度
-    struct SYNBL* next=NULL, * prior=NULL;
+    struct SYNBL* next = NULL, * prior = NULL;
 } SYNBL, * SY;
 void print();
 typedef struct PFINFL //函数表
@@ -62,7 +72,7 @@ typedef struct PFINFL //函数表
     int Fn;     //变量数
     SY Param;   //每个函数对应的变量的信息
     //addr；      //入口地址
-        struct PFINFL* next;
+    struct PFINFL* next;
 } PFINFL, * PF;
 
 typedef struct TAPEL //类型表
@@ -84,12 +94,16 @@ typedef struct queen
 {
     SYNBL* first;
     SYNBL* last;
-}queen,*QU;
+} queen, * QU;
 vector <SY> s;
 vector <PF> pf;
-vector <char> cal;
+//vector <char> cal;这个有用吗？？？我为啥要写
+vector <quater> q;
+vector <string> iw;
+vector <char> ch;
 SYNBL* a;//初始化前后指针
 PFINFL* b;
+Quaternary* qc;
 int lv = 1; //函数层数
 int is_icon();
 excel* Lexical_analysis(FILE* f);
@@ -101,9 +115,13 @@ char str[100][20];//字符串
 char c[100];//字符
 char buf, x;
 char token[200];
+char t[20][4] = { "t1","t2","t3","t4","t5","t6","t7","t8","t9","t10","t11","t12","t13","t14","t15","t16","t17","t18","t19","t20" };
+string middle_t;
+int t_num = 1;
 int main(void)
 {
-    SYNBL* heada ;
+
+    SYNBL* heada;
     heada = new SYNBL;
     heada = a;
     FILE* file = fopen("C:/Users/machenike/Desktop/test.txt", "r");
@@ -119,7 +137,7 @@ int main(void)
     fclose(file);
     return 0;
 }
-excel*  Lexical_analysis(FILE* f)
+excel* Lexical_analysis(FILE* f)
 {
     excel* head, * ps;
     head = new excel;
@@ -285,7 +303,7 @@ excel*  Lexical_analysis(FILE* f)
         else switch (buf)   //查界符表
         {
         case '+': cout << "<p,0>  " << pa[0] << endl; s->a = "p"; s->num = 0;  ps->next = s; ps = s; break;
-        case '-': cout << "<p,1>  " <<  pa[1] << endl; s->a = "p"; s->num = 1; ps->next = s; ps = s; break;
+        case '-': cout << "<p,1>  " << pa[1] << endl; s->a = "p"; s->num = 1; ps->next = s; ps = s; break;
         case '*': cout << "<p,2>  " << pa[2] << endl; s->a = "p"; s->num = 2; ps->next = s; ps = s; break;
         case '/': cout << "<p,3>  " << pa[3] << endl; s->a = "p"; s->num = 3; ps->next = s; ps = s; break;
         case '{': cout << "<p,4>  " << pa[4] << endl; s->a = "p"; s->num = 4; ps->next = s; ps = s; break;
@@ -293,8 +311,8 @@ excel*  Lexical_analysis(FILE* f)
         case ',': cout << "<p,6>  " << pa[6] << endl; s->a = "p"; s->num = 6; ps->next = s; ps = s; break;
         case ';': cout << "<p,7>  " << pa[7] << endl; s->a = "p"; s->num = 7; ps->next = s; ps = s; break;
         case '(': cout << "<p,8>  " << pa[8] << endl; s->a = "p"; s->num = 8; ps->next = s; ps = s; break;
-        case ')': cout << "<p,9>  " <<  pa[9] << endl; s->a = "p"; s->num = 9; ps->next = s; ps = s; break;
-        case '[': cout << "<p,10>  " <<  pa[10] << endl; s->a = "p"; s->num = 10; ps->next = s; ps = s; break;
+        case ')': cout << "<p,9>  " << pa[9] << endl; s->a = "p"; s->num = 9; ps->next = s; ps = s; break;
+        case '[': cout << "<p,10>  " << pa[10] << endl; s->a = "p"; s->num = 10; ps->next = s; ps = s; break;
         case ']': cout << "<p,11>  " << pa[11] << endl; s->a = "p"; s->num = 11; ps->next = s; ps = s; break;
         case '&': cout << "<p,18>  " << pa[18] << endl; s->a = "p"; s->num = 18; ps->next = s; ps = s; break;
         case '>':
@@ -413,7 +431,7 @@ int func_def()//函数定义
         //cout << a->name << " " << a->typ << " " << a->cat << endl;
         p = p->next;
     }
-    else { 
+    else {
         cout << "error2";
         exit(0);
     }
@@ -437,7 +455,7 @@ int func_def()//函数定义
     }
     p = p->next;
     complex_sentence();
-    if (strcmp(pa[p->num],"}"))
+    if (strcmp(pa[p->num], "}"))
     {
         cout << "error6";
         exit(0);
@@ -446,7 +464,7 @@ int func_def()//函数定义
 }
 int type_explanation()//类型说明
 {
-    int n=0;
+    int n = 0;
     //a->prior = a;
     a->next = new SYNBL;
     a = a->next;
@@ -463,10 +481,10 @@ int type_explanation()//类型说明
         else if (!strcmp("float", key[p->num]))
             n = 4;
         switch (n) {
-        case 1:s.back()->typ = "void"; break;
-        case 2:s.back()->typ = "int"; break;
-        case 3:s.back()->typ = "char"; break;
-        case 4:s.back()->typ = "float"; break;
+        case 1: s.back()->typ = "void"; break;
+        case 2: s.back()->typ = "int"; break;
+        case 3: s.back()->typ = "char"; break;
+        case 4: s.back()->typ = "float"; break;
         default: return 0;
         }
         p = p->next;
@@ -477,9 +495,9 @@ int type_explanation()//类型说明
 }
 int complex_sentence()//复合语句
 {
-        if (!statement_list())
-            sentence_list();
-        return 1;
+    if (!statement_list())
+        sentence_list();
+    return 1;
 }
 int sentence_list()//语句列表
 {
@@ -528,7 +546,7 @@ int direct_description()//直接说明符
     s.back()->name = i[p->num];//填写名称
     s.back()->cat = "v";//填写种类
     //cout << s.back()->name << " " << s.back()->typ << " " << s.back()->cat << endl;
-   // cout << a->name << " " << a->typ << " " << a->cat << endl;
+    // cout << a->name << " " << a->typ << " " << a->cat << endl;
     p = p->next;
     if (!direct_description1())
         return 0;
@@ -544,20 +562,20 @@ int direct_description1()//直接说明符1
         //填写数组表
         if (p->a == "con")//填写数组表
             p = p->next;
-       // exit(0);
+        // exit(0);
         if (!pw("]"))
         {
             cout << "error11";
             exit(0);
         }
-        if (!direct_description1())   
+        if (!direct_description1())
             return 0;
         else
             return 1;
     }
     if (pw(","))//下一个字符为,
     {
-        
+
         //开辟总表下一个空间和vector下一空间
         a->next = new SYNBL;
         s.push_back(a->next);
@@ -574,7 +592,7 @@ int direct_description1()//直接说明符1
         }
         //如果是标识符
         s.back()->name = i[p->num];//填写名称  //填写符号表变量名，需要vector
-        s.back()->cat = "v";//填写种类   
+        s.back()->cat = "v";//填写种类
         //cout << s.back()->name << " " << s.back()->typ << " " << s.back()->cat << endl;
         //cout << a->name << " " << a->typ << " " << a->cat << endl;
         p = p->next;
@@ -587,26 +605,34 @@ int direct_description1()//直接说明符1
 }
 int sentence()//语句
 {
-    if (give()  )
+    if (give())
         return 1;
     else
         return 0;
 }
-
 int give()//赋值表达式
 {
     if (p->a.compare("i") != 0)
         return 0;
+    iw.push_back(i[p->num]);//存等号左边标识符
     p = p->next;
     if (!pw("="))
     {
         cout << "error13" << endl;
         exit(0);
     }
+    qc = new Quaternary;//开辟空间
+    q.push_back(qc);//压栈
+    q.back()->c = '=';//
+    q.back()->ta = iw.back();
+    //四元式为 (=,a, , )
     if (PLUS())
     {
-        if(pw(";"))
-        return 1;
+        //填四元式结构体
+        q.back()->tc = iw.back();
+        //四元式为 (=,a, ,t)
+        if (pw(";"))
+            return 1;
     }
     else
     {
@@ -627,21 +653,31 @@ int PLUS1()
 {
     if (pw("+"))
     {
+        ch.push_back('+');
+        Quaternary_write();
+        //四元式(+,x,~,~) 
         if (!TIMES())
             exit(0);
         if (!PLUS1())
-            exit(0);
+            return 1;
         return 1;
     }
     else if (pw("-"))
     {
+        ch.push_back('-');
+        Quaternary_write();
+        //四元式(-,x,~,~) 
         if (!TIMES())
             exit(0);
         if (!PLUS1())
-            exit(0);
+            return 1;
         return 1;
     }
-    else return 1;
+    else
+    {
+        Quaternary_finish();
+        return 1;
+    }
 }
 int TIMES()
 {
@@ -655,29 +691,42 @@ int TIMES1()
 {
     if (pw("*"))
     {
+        judge_write();
+        ch.push_back('*');
+        Quaternary_write();
         if (!BASE())
             exit(0);
         if (!TIMES1())
-            exit(0);
+            return 1;
         return 1;
     }
     else if (pw("/"))
     {
+        judge_write();
+        ch.push_back('/');
+        Quaternary_write();
         if (!BASE())
             exit(0);
         if (!TIMES1())
-            exit(0);
+            return 1;
         return 1;
     }
     else if (pw("%"))
     {
+        judge_write();
+        ch.push_back('%');
+        Quaternary_write();
         if (!BASE())
             exit(0);
         if (!TIMES1())
-            exit(0);
+            return 1;
         return 1;
     }
-    else return 1;
+    else 
+    {
+        Quaternary_finish();
+        return 1;
+    }
 }
 int BASE()
 {
@@ -685,6 +734,7 @@ int BASE()
         return 1;
     if (!p->a.compare("con"))
     {
+        iw.push_back(con[p->num]);
         p = p->next;
         return 1;
     }
@@ -714,6 +764,7 @@ int is_icon()
         {
             if (!s[j]->name.compare(i[p->num]) && !s[j]->typ.compare("int"))
             {
+                iw.push_back(i[p->num]);
                 p = p->next;
                 return 1;
             }
@@ -729,7 +780,7 @@ int pw(string b)
     string a;
     if (p->a.compare("p") != 0)
         return 0;
-    else 
+    else
     {
         if (!b.compare(pa[p->num]))
         {
@@ -747,4 +798,32 @@ void print()
         cout << s[i]->name << " " << s[i]->typ << " " << s[i]->cat << endl;
         i++;
     }
+}
+void judge_write()//判断是不是可以直接进行的a*b类运算
+{
+    if (ch.back() == '*' || ch.back() == '/' || ch.back() == '%')
+    {
+        q.back()->tb = iw.back();//填写第二个数据，也就是最后记录的标识符
+        q.back()->tc = t[t_num];//t_num是用过的中间变量t的个数
+        iw.push_back(t[t_num]);//把中间结果作为最后记录的标识符
+        q.pop_back();//弹出此四元式
+        t_num++;//下一个中间结果的序号
+    }
+}
+void Quaternary_write()//书写四元式，运算符和第一个数据
+{
+    qc = qc->next; //开辟新空间
+    qc = new Quaternary; 
+    q.push_back(qc); //把新建立的四元式压栈
+    q.back()->c = ch.back(); //填写运算符
+    q.back()->ta = iw.back();//填写第一个数据,也就是最后记录的标识符
+}
+void Quaternary_finish()//完成四元式的书写
+{
+    q.back()->tb = iw.back();//填写第二个数据，也就是最后记录的标识符
+    q.back()->tc = t[t_num];//填写中间结果，下一个tn
+    iw.push_back(t[t_num]);//把中间结果作为最后记录的标识符
+    cout << q.back()->c << " " << q.back()->ta << " " << q.back()->tb << " " << q.back()->tc << endl;
+    q.pop_back();//弹出此四元式
+    t_num++;//下一个中间结果的序号
 }
