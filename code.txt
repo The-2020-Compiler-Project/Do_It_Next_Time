@@ -1,0 +1,307 @@
+#include<stdio.h>
+#include<string.h>
+#include<iostream>
+#include<vector>
+#include <fstream>
+using namespace std;
+
+struct excel//存储输出token序列的结构体
+{
+    string a;//类别名
+    int num;//编号
+    int line;//该词位于源代码中的行数
+    excel *next;
+};
+typedef struct excel excel,*linklist;
+excel *Lexical_analysis(FILE *f);
+int lexical(void)//利用该函数打开该文件，并调用扫描器函数。
+{
+    excel *p;
+    FILE *file=fopen("词法分析.txt","r");
+    if(file==NULL)
+    {
+        cout<<"read source file failed!"<<endl;
+        return -1;
+    }//判断读取文件是否成功
+    p=Lexical_analysis(file);
+    fclose(file);
+    ofstream fout("data.txt");     //创建一个data.txt的文件
+    while(p)
+    {
+        fout << p->a<< "," << p->num<<","<<p->line<< endl;	//将变量的值写入文件
+        p=p->next;
+    }
+   fout.close();                  //关闭文件//将token序列通过链表写入文件，实验序列是否存在问题
+    return 0;
+}
+excel *Lexical_analysis(FILE *f)
+{char key[17][20]={"int","main","void","if","else","char","scanf","printf","break","float""for","return","switch","case","continue","do","while"};//关键字
+char p[20][20]={"+","-","*","/","{","}",",",";","(",")","[","]",">=",">","<=","<","==","=","&","||"};          //界符
+char i[100][20];//标识符
+char con[100][20];//常数
+char str[100][20];//字符串
+char c[100];//字符
+char buf,x;
+char token[200];
+excel *head, *ps;
+head = new excel;
+ps = head;
+int l=1;
+int m=0,n=0,c1=0,c2=0,con1=0,con2=0,str1=0,str2=0,i1=0,i2=0;
+int temp=0;
+    while((buf=fgetc(f))!=EOF){
+            excel *s=new excel;
+            if(buf=='\n')
+            {
+                l++;
+            }
+            s->line=l;
+        if(buf==' '||buf=='\t'||buf=='\n') {}
+
+        else if(((buf>='a')&&(buf<='z'))||((buf>='A')&&(buf<='Z')))
+        {
+            m=0;temp=0;
+            while(((buf>='a')&&(buf<='z'))||((buf>='A')&&(buf<='Z'))||((buf>='0')&&(buf<='9'))||buf=='_')
+            {
+
+                token[m++]=buf;
+                buf=fgetc(f);
+            }
+            token[m++]='\0';
+            fseek(f,-1,SEEK_CUR);//零点为当前指针位置
+            for(n=0;n<17;n++)
+                if(strcmp(token,key[n])==0)
+                {
+                    s->a="k";
+                    s->num=n;
+                    ps->next=s;
+                    ps=s;
+                    cout<<"<k,"<<n<<">  "<<key[n]<<endl;
+                    break;
+                }
+            if(n==17)
+            {
+                for(i1=0;i1<i2;i1++)
+            {
+                if(strcmp(token,i[i1])==0)
+                {
+				temp=1;
+				 s->a="i";
+                s->num=i1;
+                ps->next=s;
+                ps=s;
+                cout<<"<i,"<<i1<<">  "<<i[i1]<<endl;
+                break;
+                }
+            }
+            if(temp==0)
+               {
+                strcpy(i[i2],token);
+                 s->a="i";
+                 s->num=i2;
+                  ps->next=s;
+                ps=s;
+                cout<<"<i,"<<i2<<">  "<<i[i2]<<endl;
+                i2++;
+               }
+            }
+
+        }
+        else if((buf>='0')&&(buf<='9'))// 判断是否为算数常数
+        {
+            m=0;temp=0;
+            while(((buf>='0')&&(buf<='9'))||buf=='.')
+            {
+
+                token[m++]=buf;
+                buf=fgetc(f);
+            }
+            token[m++]='\0';
+             fseek(f,-1,SEEK_CUR);
+            for(con1=0;con1<con2;con1++)
+            {
+                if(strcmp(token,con[con1])==0)
+                {
+				temp=1;
+				s->a="con";
+                 s->num=con1;
+                  ps->next=s;
+                ps=s;
+                cout<<"<con,"<<con1<<">  "<<con[con1]<<endl;
+                break;
+                }
+            }
+            if(temp==0)
+               {
+                strcpy(con[con2],token);
+                s->a="con";
+                 s->num=con2;
+                  ps->next=s;
+                ps=s;
+                cout<<"<con,"<<con2<<">  "<<con[con2]<<endl;
+                con2++;
+               }
+
+        }
+        else if(buf=='\'')//判断是否为字符
+        {
+            buf=fgetc(f);
+            x=buf;temp=0;
+            for(c1=0;c1<c2;c1++)
+			{
+				if(x==c[c1])
+				{
+					temp=1;
+					s->a="c";
+                 s->num=c1;
+                  ps->next=s;
+                ps=s;
+					cout<<"<c,"<<c1<<">  "<<c[c1]<<endl;
+				}
+			}
+			if(temp==0)
+			{
+				c[c2]=x;
+				 s->a="c";
+                 s->num=c2;
+                  ps->next=s;
+                ps=s;
+				cout<<"<c,"<<c2<<">  "<<c[c2]<<endl;
+				c2++;
+			}
+
+            while(buf!='\'')
+            {
+                buf=fgetc(f);
+            }
+        }
+        else if(buf=='"')//判断是否为字符串
+        {   buf=fgetc(f);
+		    m=0;temp=0;
+            while(buf!='"')
+            {  token[m++]=buf;
+                buf=fgetc(f);
+
+            }
+            token[m++]='\0';
+             for(str1=0;str1<str2;str1++)
+            {
+                if(strcmp(token,str[str1])==0)
+                {
+				temp=1;
+				s->a="string";
+                 s->num=str1;
+                  ps->next=s;
+                ps=s;
+                cout<<"<string,"<<str1<<">  "<<str[str1]<<endl;
+                break;
+                }
+            }
+            if(temp==0)
+               {
+                strcpy(str[str2],token);
+                s->a="string";
+                 s->num=str2;
+                  ps->next=s;
+                ps=s;
+                cout<<"<string,"<<str2<<">  "<<str[str2]<<endl;
+                str2++;
+               }
+        }
+else switch(buf)    //查界符表
+        {
+            case '+':cout<<"<p,0>  "<<p[0]<<endl;s->a="p";s->num=0;  ps->next=s;ps=s;break;
+            case '-':cout<<"<p,1>  "<<p[1]<<endl;s->a="p";s->num=1; ps->next=s;ps=s;break;
+            case '*':cout<<"<p,2>  "<<p[2]<<endl;s->a="p";s->num=2;ps->next=s;ps=s; break;
+            case '/':cout<<"<p,3>  "<<p[3]<<endl;s->a="p";s->num=3;ps->next=s;ps=s; break;
+            case '{':cout<<"<p,4>  "<<p[4]<<endl;s->a="p";s->num=4;ps->next=s; ps=s;break;
+            case '}':cout<<"<p,5>  "<<p[5]<<endl;s->a="p";s->num=5; ps->next=s;ps=s;break;
+            case ',':cout<<"<p,6>  "<<p[6]<<endl;s->a="p";s->num=6; ps->next=s;ps=s;break;
+            case ';':cout<<"<p,7>  "<<p[7]<<endl;s->a="p";s->num=7;ps->next=s;ps=s;break;
+            case '(':cout<<"<p,8>  "<<p[8]<<endl;s->a="p";s->num=8;ps->next=s;ps=s; break;
+            case ')':cout<<"<p,9>  "<<p[9]<<endl; s->a="p";s->num=9;ps->next=s;ps=s;break;
+            case '[':cout<<"<p,10>  "<<p[10]<<endl; s->a="p";s->num=10;ps->next=s;ps=s;break;
+            case ']':cout<<"<p,11>  "<<p[11]<<endl;s->a="p";s->num=11;ps->next=s;ps=s;break;
+            case '&':cout<<"<p,18>  "<<p[18]<<endl;s->a="p";s->num=18;ps->next=s;ps=s;break;
+            case '>':
+            {
+                buf=fgetc(f);
+                if(buf=='=')
+                {
+                    cout<<"<p,12>  "<<p[12]<<endl;
+                    s->a="p";s->num=12;
+                    ps->next=s;
+                    ps=s;
+                }
+                else
+                {
+                    fseek(f,-1,SEEK_CUR);
+                    cout<<"<p,13>  "<<p[13]<<endl;
+                    s->a="p";s->num=13;
+                    ps->next=s;
+                    ps=s;
+                }
+            }
+            break;
+        case '<':
+            {
+                buf=fgetc(f);
+                if(buf=='=')
+                {
+                    cout<<"<p,14>  "<<p[14]<<endl;
+                    s->a="p";s->num=14;
+                    ps->next=s;
+                    ps=s;
+                }
+                else
+                {
+                    fseek(f,-1,SEEK_CUR);
+                    cout<<"<p,15>  "<<p[15]<<endl;
+                    s->a="p";s->num=15;
+                    ps->next=s;
+                    ps=s;
+                }
+            }
+            break;
+        case '=':
+            {
+                buf=fgetc(f);
+                if(buf=='=')
+                {
+                    cout<<"<p,16>  "<<p[16]<<endl;
+                    s->a="p";s->num=16;
+                    ps->next=s;
+                    ps=s;
+                }
+                else
+                {
+                    fseek(f,-1,SEEK_CUR);
+                    cout<<"<p,17>  "<<p[17]<<endl;
+                    s->a="p";s->num=17;
+                    ps->next=s;
+                    ps=s;
+                }
+            }
+                break;
+        case '|':
+        {buf=fgetc(f);
+        if(buf=='|')
+        {
+           cout<<"<p,19>  "<<p[19]<<endl;
+           s->a="p";s->num=19;
+           ps->next=s;
+                    ps=s;
+        }
+        }break;
+        }
+
+    }
+    head = head->next;
+	ps->next = NULL;
+	return head;
+}
+int main()//用主函数调用看是否能实现词法分析
+{
+    lexical();
+    return 0;
+}
