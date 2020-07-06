@@ -8,6 +8,10 @@ using namespace std;
 #define _CRT_SECURE_NO_DEPRECATE
 #define _CRT_SECURE_NO_WARNINGS
 #pragma warning(disable:4996)
+int t_word();
+void print1();
+void reset();
+int judge_used();
 int condition();
 int is_if();
 void Quaternary_finish();
@@ -52,6 +56,9 @@ typedef struct Quaternary
     string ta;
     string tb;
     string tc;
+    int msg_a;
+    int msg_b;
+    int msg_c;
     struct Quaternary* next;
 } Quaternary, * quater;
 typedef struct SYNBL //符号表总表
@@ -104,6 +111,7 @@ vector <quater> q_stack;
 vector <string> iw;
 vector <string> ch;
 vector <quater> quaters;
+vector <quater> quaters_m;
 SYNBL* a;//初始化前后指针
 PFINFL* b;
 Quaternary* qc;
@@ -137,6 +145,7 @@ int main(void)
     if (program())
         cout << "编译成功" << endl;
     print();
+    print1();
     fclose(file);
     return 0;
 }
@@ -395,7 +404,17 @@ excel* Lexical_analysis(FILE* f)
     ps->next = NULL;
     return head;
 }
-
+void print1()
+{
+    int i = -1;
+    if (quaters.empty())
+        exit(0);
+    do
+    {
+        i++;
+        cout << quaters[i]->c << " " << quaters[i]->ta << " " << quaters[i]->tb << " " << quaters[i]->tc << endl;
+    } while (quaters[i] != quaters.back());
+}
 int program()// 程序
 {
     if (out_statement())
@@ -634,8 +653,19 @@ int give()//赋值表达式
     {
         //填四元式结构体
         q_stack.back()->tc = iw.back();
+        
         cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
         //四元式为 (=,a, ,t)
+        //下面这步用来排除四元式序列栈顶为else  ,   ,   ,   ; if   ,   ,   , ; = a    tn   tn为一个式子且a=tn单独出现的情况
+        if (!q_stack.back()->c.compare("=") && t_word()&& quaters.back()->c.compare("else") && quaters.back()->c.compare("if"))
+            quaters.back()->tc = q_stack.back()->ta;
+        else
+            quaters.push_back(q_stack.back());
+        quaters_m.push_back(quaters.back());
+        //生成目标代码
+        quaters_m.clear();
+        q_stack.pop_back();
+
         if (pw(";"))
             return 1;
     }
@@ -658,6 +688,8 @@ int PLUS1()
 {
     if (pw("+"))
     {
+        if (!ch.back().compare(")"))
+            reset();
         judge_write();
         ch.push_back("+");
         Quaternary_write();
@@ -680,6 +712,8 @@ int PLUS1()
     }
     else if (pw("-"))
     {
+        if (!ch.back().compare(")"))
+            reset();
         judge_write();
         ch.push_back("-");
         Quaternary_write();
@@ -691,7 +725,7 @@ int PLUS1()
             if ((!ch.back().compare("+") || !ch.back().compare("-") || !ch.back().compare("*") || !ch.back().compare("/") || !ch.back().compare("%") || !ch.back().compare(")")))
             {
                 Quaternary_finish();
-                return 1; 
+                return 1;
             }
             else
             {
@@ -715,6 +749,8 @@ int TIMES1()
 {
     if (pw("*"))
     {
+        if (!ch.back().compare(")"))
+            reset();
         judge_write();
         ch.push_back("*");
         Quaternary_write();
@@ -726,6 +762,8 @@ int TIMES1()
     }
     else if (pw("/"))
     {
+        if (!ch.back().compare(")"))
+            reset();
         judge_write();
         ch.push_back("/");
         Quaternary_write();
@@ -737,6 +775,8 @@ int TIMES1()
     }
     else if (pw("%"))
     {
+        if (!ch.back().compare(")"))
+            reset();
         judge_write();
         ch.push_back("%");
         Quaternary_write();
@@ -746,12 +786,12 @@ int TIMES1()
             return 1;
         return 1;
     }
-    else if((!strcmp(pa[p->num],";")|| !strcmp(pa[p->num], ")"))&&(!ch.back().compare("*") || !ch.back().compare("/") || !ch.back().compare("%") || !ch.back().compare(")")  ))
+    else if ((!strcmp(pa[p->num], ";") || !strcmp(pa[p->num], ")")) && (!ch.back().compare("*") || !ch.back().compare("/") || !ch.back().compare("%") || !ch.back().compare(")")))
     {
         Quaternary_finish();
         return 1;
     }
-    else 
+    else
         return 1;
 }
 int BASE()
@@ -773,6 +813,8 @@ int BASE()
         if (!pw(")"))
             exit(0);
         ch.push_back(")");
+        if (!strcmp(pa[p->num], ";"))
+            reset();
         return 1;
     }
     else
@@ -841,12 +883,16 @@ void judge_write()//判断是不是可以直接进行的a*b类运算
     if (!ch.back().compare("*") || !ch.back().compare("/") || !ch.back().compare("%"))
     {
         q_stack.back()->tb = iw.back();
-        q_stack.back()->tc = t[t_num];//t_num是用过的中间变量t的个数
-        iw.push_back(t[t_num]) ;
-        cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
-        quaters.push_back(q_stack.back());
-        q_stack.pop_back();
-        t_num++;
+        if (!judge_used())
+        {
+            q_stack.back()->tc = t[t_num];//t_num是用过的中间变量t的个数
+            iw.push_back(t[t_num]);
+            cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
+            quaters.push_back(q_stack.back());
+            quaters_m.push_back(q_stack.back());
+            q_stack.pop_back();
+            t_num++;
+        }
     }
 }
 void Quaternary_write()
@@ -864,25 +910,29 @@ void Quaternary_write_if()
     q_stack.push_back(qc);
     q_stack.back()->c = ch.back();
 }
-void Quaternary_finish()
+void Quaternary_finish()//四则运算四元式的最后填写和输出
 {
     q_stack.back()->tb = iw.back();
-    q_stack.back()->tc = t[t_num];
+    if (!judge_used())
+    {
+        q_stack.back()->tc = t[t_num];
+        iw.push_back(t[t_num]);
+        cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
+        quaters.push_back(q_stack.back());
+        quaters_m.push_back(q_stack.back());
+        q_stack.pop_back();
+        t_num++;
+    }
+}
+void Quaternary_finish_if()//if语句四元式的最后填写和输出
+{
+    q_stack.back()->tb = iw.back();
     iw.push_back(t[t_num]);
     cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
     quaters.push_back(q_stack.back());
     q_stack.pop_back();
-    t_num++;
 }
-void Quaternary_finish_if()
-{
-    q_stack.back()->tb = iw.back();
-    iw.push_back(t[t_num]);
-    cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
-    quaters.push_back(q_stack.back());
-    q_stack.pop_back();
-}
-void Quaternary_finish_else()
+void Quaternary_finish_else()//else语句四元式的最后填写和输出
 {
     cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
     quaters.push_back(q_stack.back());
@@ -890,7 +940,7 @@ void Quaternary_finish_else()
 }
 int is_if()
 {
-    
+
     if (!pi("if"))
         return 0;
     ch.push_back("if");
@@ -930,7 +980,7 @@ int is_if()
             exit(0);
         return 1;
     }
-    
+
 }
 int condition()
 {
@@ -954,4 +1004,42 @@ int condition()
     }
     else return 0;
     //else if()做字符的判断
+}
+int judge_used()
+{
+    int i = -1;
+    if (quaters_m.empty())
+        return 0;
+    do
+    {
+        i++;
+        if (!quaters_m[i]->ta.compare(q_stack.back()->ta))
+            if(!quaters_m[i]->tb.compare(q_stack.back()->tb))
+                if (!quaters_m[i]->c.compare(q_stack.back()->c))
+                {
+                    iw.push_back(quaters_m[i]->tc);
+                    q_stack.pop_back();
+                    return 1;
+                }     
+    } while (quaters_m[i] != quaters_m.back());
+        return 0;
+}
+void reset()
+{
+    while (ch.back().compare("("))
+    {
+        ch.pop_back();
+    }
+    ch.pop_back();
+}
+int t_word()
+{
+    int i = 0;
+    while (i < 20)
+    {
+        if (!q_stack.back()->tc.compare(t[i]))
+            return 1;
+        i++;
+    }
+    return 0;
 }
