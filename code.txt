@@ -8,6 +8,19 @@ using namespace std;
 #define _CRT_SECURE_NO_DEPRECATE
 #define _CRT_SECURE_NO_WARNINGS
 #pragma warning(disable:4996)
+void Quaternary_finish_condition();
+void produce_finalcode_if(string a, string R[8][3], int* i);
+void produce_finalcode_dec(string a, string R[8][3], int* i);
+void produce_finalcode_add(string a, string R[8][3], int* i);
+void produce_finalcode_div(string a, string R[8][3], int* i);
+void produce_finalcode_mul(string a, string R[8][3], int* i);
+void produce_finalcode(string a, string R[8][3], int* i);
+int produce_dseg(int i);
+int find_in_dseg(string a,int *p);
+void write_v();
+int find_empty_R(string R[8][3]);
+int is_con(string a);
+int find_R(string R[8][3], string a);
 string find_R();
 void produce_final_code();
 void Quaternary_write_end();
@@ -51,69 +64,71 @@ typedef struct TAPEL* TA;
 typedef struct AINFL* AI;
 struct excel//存储输出token序列的结构体
 {
-  string a;
-  int num;
-  excel* next;
+    string a;
+    int num;
+    excel* next;
 };
 excel* p; //token串头指针
 typedef struct Quaternary
 {
-  string c;
-  string ta;
-  string tb;
-  string tc;
-  string msg_a;
-  string msg_b;
-  string msg_c;
-  struct Quaternary* next;
+    string c;
+    string ta;
+    string tb;
+    string tc;
+    string msg_a;
+    string msg_b;
+    string msg_c;
+    struct Quaternary* next;
 } Quaternary, * quater;
 typedef struct SYNBL //符号表总表
 {
-  string name;
-  string typ;
-  string cat;
-  int  addr[2];//变量的地址
-  PF p = NULL; //函数表的地址
-  TA t = NULL;   //类型表，有数组时需要填
-  int consl;   //常量的值
-  int length;  //数组的长度
-  struct SYNBL* next = NULL, * prior = NULL;
+    string name;
+    string typ;
+    string cat;
+    int  addr[2];//变量的地址
+    PF p = NULL; //函数表的地址
+    TA t = NULL;   //类型表，有数组时需要填
+    string consl;   //常量的值
+    int length;  //数组的长度
+    struct SYNBL* next = NULL, * prior = NULL;
 } SYNBL, * SY;
 void print();
 typedef struct PFINFL //函数表
 {
-  int Level;  //函数在第几层
-  int Off;    //区距
-  int Fn;     //变量数
-  SY Param;   //每个函数对应的变量的信息
-  //addr；      //入口地址
-  struct PFINFL* next;
+    int Level;  //函数在第几层
+    int Off;    //区距
+    int Fn;     //变量数
+    SY Param;   //每个函数对应的变量的信息
+    //addr；      //入口地址
+    struct PFINFL* next;
 } PFINFL, * PF;
 
 typedef struct TAPEL //类型表
 {
-  char type; //类型
-  AI p;   //如果是数组型就继续填数组表
-  struct TAPEL* next;
+    char type; //类型
+    AI p;   //如果是数组型就继续填数组表
+    struct TAPEL* next;
 } TAPEL, * TA;
 
 typedef struct AINFL //数组表
 {
-  int low; //数组下界
-  int up;  //数组上界
-  AI a; //填写单元类型
-  int clen; //每个单元占的长度
-  struct AINFL* next;
+    int low; //数组下界
+    int up;  //数组上界
+    AI a; //填写单元类型
+    int clen; //每个单元占的长度
+    struct AINFL* next;
 } AINFL, * AI;
 typedef struct queen
 {
-  SYNBL* first;
-  SYNBL* last;
+    SYNBL* first;
+    SYNBL* last;
 } queen, * QU;
-vector <string> dseg;
 vector <SY> s;
 vector <PF> pf;
+vector <string> if_stack;
+vector <string> else_stack;
 //vector <char> cal;这个有用吗？？？我为啥要写
+vector <string> dseg;
 vector <quater> q_stack;
 vector <string> iw;
 vector <string> ch;
@@ -133,1084 +148,1430 @@ char str[100][20];//字符串
 char c[100];//字符
 char buf, x;
 char token[200];
-char t[20][4] = { "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t10", "t11", "t12", "t13", "t14", "t15", "t16", "t17", "t18", "t19", "t20" };
+char t[20][4] = { "t1","t2","t3","t4","t5","t6","t7","t8","t9","t10","t11","t12","t13","t14","t15","t16","t17","t18","t19","t20" };
+string label[7] = { "A","B","C","D","E","F","G" };
 string middle_t;
 int t_num = 0;
 int main(void)
 {
 
-  SYNBL* heada;
-  heada = new SYNBL;
-  heada = a;
-  FILE* file = fopen("C:/Users/machenike/Desktop/test.txt", "r");
-  if (file == NULL)
-  {
-    cout << "read source file failed!" << endl;
-    return -1;
-  }//判断读取文件是否成功
-  p = Lexical_analysis(file);
-  if (program())
-    cout << "编译成功" << endl;
-  print();
-  print1();
-  produce_final_code();
-  fclose(file);
-  return 0;
+    SYNBL* heada;
+    heada = new SYNBL;
+    heada = a;
+    FILE* file = fopen("C:/Users/machenike/Desktop/test.txt", "r");
+    if (file == NULL)
+    {
+        cout << "read source file failed!" << endl;
+        return -1;
+    }//判断读取文件是否成功
+    p = Lexical_analysis(file);
+    if (program())
+        cout << "编译成功" << endl;
+    print();
+    print1();
+    produce_final_code();
+    fclose(file);
+    return 0;
 }
 excel* Lexical_analysis(FILE* f)
 {
-  excel* head, * ps;
-  head = new excel;
-  ps = head;
-  int m = 0, n = 0, c1 = 0, c2 = 0, con1 = 0, con2 = 0, str1 = 0, str2 = 0, i1 = 0, i2 = 0;
-  int temp = 0;
-  while ((buf = fgetc(f)) != EOF) {
-    excel* s = new excel;
-    if (buf == ' ' || buf == '\t' || buf == '\n') {}
+    excel* head, * ps;
+    head = new excel;
+    ps = head;
+    int m = 0, n = 0, c1 = 0, c2 = 0, con1 = 0, con2 = 0, str1 = 0, str2 = 0, i1 = 0, i2 = 0;
+    int temp = 0;
+    while ((buf = fgetc(f)) != EOF) {
+        excel* s = new excel;
+        if (buf == ' ' || buf == '\t' || buf == '\n') {}
 
-    else if (((buf >= 'a') && (buf <= 'z')) || ((buf >= 'A') && (buf <= 'Z')))
-    {
-      m = 0; temp = 0;
-      while (((buf >= 'a') && (buf <= 'z')) || ((buf >= 'A') && (buf <= 'Z')) || ((buf >= '0') && (buf <= '9')) || buf == '_')
-      {
+        else if (((buf >= 'a') && (buf <= 'z')) || ((buf >= 'A') && (buf <= 'Z')))
+        {
+            m = 0; temp = 0;
+            while (((buf >= 'a') && (buf <= 'z')) || ((buf >= 'A') && (buf <= 'Z')) || ((buf >= '0') && (buf <= '9')) || buf == '_')
+            {
 
-        token[m++] = buf;
-        buf = fgetc(f);
-      }
-      token[m++] = '\0';
-      fseek(f, -1, SEEK_CUR); //零点为当前指针位置
-      for (n = 0; n < 17; n++)
-        if (strcmp(token, key[n]) == 0)
-        {
-          s->a = "k";
-          s->num = n;
-          ps->next = s;
-          ps = s;
-          cout << "<k," << n << ">  " << key[n] << endl;
-          break;
-        }
-      if (n == 17)
-      {
-        for (i1 = 0; i1 < i2; i1++)
-        {
-          if (strcmp(token, i[i1]) == 0)
-          {
-            temp = 1;
-            s->a = "i";
-            s->num = i1;
-            ps->next = s;
-            ps = s;
-            cout << "<i," << i1 << ">  " << i[i1] << endl;
-            break;
-          }
-        }
-        if (temp == 0)
-        {
-          strcpy(i[i2], token);
-          s->a = "i";
-          s->num = i2;
-          ps->next = s;
-          ps = s;
-          cout << "<i," << i2 << ">  " << i[i2] << endl;
-          i2++;
-        }
-      }
+                token[m++] = buf;
+                buf = fgetc(f);
+            }
+            token[m++] = '\0';
+            fseek(f, -1, SEEK_CUR); //零点为当前指针位置
+            for (n = 0; n < 17; n++)
+                if (strcmp(token, key[n]) == 0)
+                {
+                    s->a = "k";
+                    s->num = n;
+                    ps->next = s;
+                    ps = s;
+                    cout << "<k," << n << ">  " << key[n] << endl;
+                    break;
+                }
+            if (n == 17)
+            {
+                for (i1 = 0; i1 < i2; i1++)
+                {
+                    if (strcmp(token, i[i1]) == 0)
+                    {
+                        temp = 1;
+                        s->a = "i";
+                        s->num = i1;
+                        ps->next = s;
+                        ps = s;
+                        cout << "<i," << i1 << ">  " << i[i1] << endl;
+                        break;
+                    }
+                }
+                if (temp == 0)
+                {
+                    strcpy(i[i2], token);
+                    s->a = "i";
+                    s->num = i2;
+                    ps->next = s;
+                    ps = s;
+                    cout << "<i," << i2 << ">  " << i[i2] << endl;
+                    i2++;
+                }
+            }
 
-    }
-    else if ((buf >= '0') && (buf <= '9')) // 判断是否为算数常数
-    {
-      m = 0; temp = 0;
-      while (((buf >= '0') && (buf <= '9')) || buf == '.')
-      {
+        }
+        else if ((buf >= '0') && (buf <= '9')) // 判断是否为算数常数
+        {
+            m = 0; temp = 0;
+            while (((buf >= '0') && (buf <= '9')) || buf == '.')
+            {
 
-        token[m++] = buf;
-        buf = fgetc(f);
-      }
-      token[m++] = '\0';
-      fseek(f, -1, SEEK_CUR);
-      for (con1 = 0; con1 < con2; con1++)
-      {
-        if (strcmp(token, con[con1]) == 0)
-        {
-          temp = 1;
-          s->a = "con";
-          s->num = con1;
-          ps->next = s;
-          ps = s;
-          cout << "<con," << con1 << ">  " << con[con1] << endl;
-          break;
-        }
-      }
-      if (temp == 0)
-      {
-        strcpy(con[con2], token);
-        s->a = "con";
-        s->num = con2;
-        ps->next = s;
-        ps = s;
-        cout << "<con," << con2 << ">  " << con[con2] << endl;
-        con2++;
-      }
+                token[m++] = buf;
+                buf = fgetc(f);
+            }
+            token[m++] = '\0';
+            fseek(f, -1, SEEK_CUR);
+            for (con1 = 0; con1 < con2; con1++)
+            {
+                if (strcmp(token, con[con1]) == 0)
+                {
+                    temp = 1;
+                    s->a = "con";
+                    s->num = con1;
+                    ps->next = s;
+                    ps = s;
+                    cout << "<con," << con1 << ">  " << con[con1] << endl;
+                    break;
+                }
+            }
+            if (temp == 0)
+            {
+                strcpy(con[con2], token);
+                s->a = "con";
+                s->num = con2;
+                ps->next = s;
+                ps = s;
+                cout << "<con," << con2 << ">  " << con[con2] << endl;
+                con2++;
+            }
 
-    }
-    else if (buf == '\'') //判断是否为字符
-    {
-      buf = fgetc(f);
-      x = buf; temp = 0;
-      for (c1 = 0; c1 < c2; c1++)
-      {
-        if (x == c[c1])
-        {
-          temp = 1;
-          s->a = "c";
-          s->num = c1;
-          ps->next = s;
-          ps = s;
-          cout << "<c," << c1 << ">  " << c[c1] << endl;
         }
-      }
-      if (temp == 0)
-      {
-        c[c2] = x;
-        s->a = "c";
-        s->num = c2;
-        ps->next = s;
-        ps = s;
-        cout << "<c," << c2 << ">  " << c[c2] << endl;
-        c2++;
-      }
+        else if (buf == '\'') //判断是否为字符
+        {
+            buf = fgetc(f);
+            x = buf; temp = 0;
+            for (c1 = 0; c1 < c2; c1++)
+            {
+                if (x == c[c1])
+                {
+                    temp = 1;
+                    s->a = "c";
+                    s->num = c1;
+                    ps->next = s;
+                    ps = s;
+                    cout << "<c," << c1 << ">  " << c[c1] << endl;
+                }
+            }
+            if (temp == 0)
+            {
+                c[c2] = x;
+                s->a = "c";
+                s->num = c2;
+                ps->next = s;
+                ps = s;
+                cout << "<c," << c2 << ">  " << c[c2] << endl;
+                c2++;
+            }
 
-      while (buf != '\'')
-      {
-        buf = fgetc(f);
-      }
-    }
-    else if (buf == '"') //判断是否为字符串
-    {
-      buf = fgetc(f);
-      m = 0; temp = 0;
-      while (buf != '"')
-      {
-        token[m++] = buf;
-        buf = fgetc(f);
+            while (buf != '\'')
+            {
+                buf = fgetc(f);
+            }
+        }
+        else if (buf == '"') //判断是否为字符串
+        {
+            buf = fgetc(f);
+            m = 0; temp = 0;
+            while (buf != '"')
+            {
+                token[m++] = buf;
+                buf = fgetc(f);
 
-      }
-      token[m++] = '\0';
-      for (str1 = 0; str1 < str2; str1++)
-      {
-        if (strcmp(token, str[str1]) == 0)
-        {
-          temp = 1;
-          s->a = "string";
-          s->num = str1;
-          ps->next = s;
-          ps = s;
-          cout << "<string," << str1 << ">  " << str[str1] << endl;
-          break;
+            }
+            token[m++] = '\0';
+            for (str1 = 0; str1 < str2; str1++)
+            {
+                if (strcmp(token, str[str1]) == 0)
+                {
+                    temp = 1;
+                    s->a = "string";
+                    s->num = str1;
+                    ps->next = s;
+                    ps = s;
+                    cout << "<string," << str1 << ">  " << str[str1] << endl;
+                    break;
+                }
+            }
+            if (temp == 0)
+            {
+                strcpy(str[str2], token);
+                s->a = "string";
+                s->num = str2;
+                ps->next = s;
+                ps = s;
+                cout << "<string," << str2 << ">  " << str[str2] << endl;
+                str2++;
+            }
         }
-      }
-      if (temp == 0)
-      {
-        strcpy(str[str2], token);
-        s->a = "string";
-        s->num = str2;
-        ps->next = s;
-        ps = s;
-        cout << "<string," << str2 << ">  " << str[str2] << endl;
-        str2++;
-      }
-    }
-    else switch (buf)   //查界符表
-      {
-      case '+': cout << "<p,0>  " << pa[0] << endl; s->a = "p"; s->num = 0;  ps->next = s; ps = s; break;
-      case '-': cout << "<p,1>  " << pa[1] << endl; s->a = "p"; s->num = 1; ps->next = s; ps = s; break;
-      case '*': cout << "<p,2>  " << pa[2] << endl; s->a = "p"; s->num = 2; ps->next = s; ps = s; break;
-      case '/': cout << "<p,3>  " << pa[3] << endl; s->a = "p"; s->num = 3; ps->next = s; ps = s; break;
-      case '{': cout << "<p,4>  " << pa[4] << endl; s->a = "p"; s->num = 4; ps->next = s; ps = s; break;
-      case '}': cout << "<p,5>  " << pa[5] << endl; s->a = "p"; s->num = 5; ps->next = s; ps = s; break;
-      case ',': cout << "<p,6>  " << pa[6] << endl; s->a = "p"; s->num = 6; ps->next = s; ps = s; break;
-      case ';': cout << "<p,7>  " << pa[7] << endl; s->a = "p"; s->num = 7; ps->next = s; ps = s; break;
-      case '(': cout << "<p,8>  " << pa[8] << endl; s->a = "p"; s->num = 8; ps->next = s; ps = s; break;
-      case ')': cout << "<p,9>  " << pa[9] << endl; s->a = "p"; s->num = 9; ps->next = s; ps = s; break;
-      case '[': cout << "<p,10>  " << pa[10] << endl; s->a = "p"; s->num = 10; ps->next = s; ps = s; break;
-      case ']': cout << "<p,11>  " << pa[11] << endl; s->a = "p"; s->num = 11; ps->next = s; ps = s; break;
-      case '&': cout << "<p,18>  " << pa[18] << endl; s->a = "p"; s->num = 18; ps->next = s; ps = s; break;
-      case '>':
-      {
-        buf = fgetc(f);
-        if (buf == '=')
+        else switch (buf)   //查界符表
         {
-          cout << "<p,12>  " << pa[12] << endl;
-          s->a = "p"; s->num = 12;
-          ps->next = s;
-          ps = s;
-        }
-        else
+        case '+': cout << "<p,0>  " << pa[0] << endl; s->a = "p"; s->num = 0;  ps->next = s; ps = s; break;
+        case '-': cout << "<p,1>  " << pa[1] << endl; s->a = "p"; s->num = 1; ps->next = s; ps = s; break;
+        case '*': cout << "<p,2>  " << pa[2] << endl; s->a = "p"; s->num = 2; ps->next = s; ps = s; break;
+        case '/': cout << "<p,3>  " << pa[3] << endl; s->a = "p"; s->num = 3; ps->next = s; ps = s; break;
+        case '{': cout << "<p,4>  " << pa[4] << endl; s->a = "p"; s->num = 4; ps->next = s; ps = s; break;
+        case '}': cout << "<p,5>  " << pa[5] << endl; s->a = "p"; s->num = 5; ps->next = s; ps = s; break;
+        case ',': cout << "<p,6>  " << pa[6] << endl; s->a = "p"; s->num = 6; ps->next = s; ps = s; break;
+        case ';': cout << "<p,7>  " << pa[7] << endl; s->a = "p"; s->num = 7; ps->next = s; ps = s; break;
+        case '(': cout << "<p,8>  " << pa[8] << endl; s->a = "p"; s->num = 8; ps->next = s; ps = s; break;
+        case ')': cout << "<p,9>  " << pa[9] << endl; s->a = "p"; s->num = 9; ps->next = s; ps = s; break;
+        case '[': cout << "<p,10>  " << pa[10] << endl; s->a = "p"; s->num = 10; ps->next = s; ps = s; break;
+        case ']': cout << "<p,11>  " << pa[11] << endl; s->a = "p"; s->num = 11; ps->next = s; ps = s; break;
+        case '&': cout << "<p,18>  " << pa[18] << endl; s->a = "p"; s->num = 18; ps->next = s; ps = s; break;
+        case '>':
         {
-          fseek(f, -1, SEEK_CUR);
-          cout << "<p,13>  " << pa[13] << endl;
-          s->a = "p"; s->num = 13;
-          ps->next = s;
-          ps = s;
+            buf = fgetc(f);
+            if (buf == '=')
+            {
+                cout << "<p,12>  " << pa[12] << endl;
+                s->a = "p"; s->num = 12;
+                ps->next = s;
+                ps = s;
+            }
+            else
+            {
+                fseek(f, -1, SEEK_CUR);
+                cout << "<p,13>  " << pa[13] << endl;
+                s->a = "p"; s->num = 13;
+                ps->next = s;
+                ps = s;
+            }
         }
-      }
-      break;
-      case '<':
-      {
-        buf = fgetc(f);
-        if (buf == '=')
+        break;
+        case '<':
         {
-          cout << "<p,14>  " << pa[14] << endl;
-          s->a = "p"; s->num = 14;
-          ps->next = s;
-          ps = s;
+            buf = fgetc(f);
+            if (buf == '=')
+            {
+                cout << "<p,14>  " << pa[14] << endl;
+                s->a = "p"; s->num = 14;
+                ps->next = s;
+                ps = s;
+            }
+            else
+            {
+                fseek(f, -1, SEEK_CUR);
+                cout << "<p,15>  " << pa[15] << endl;
+                s->a = "p"; s->num = 15;
+                ps->next = s;
+                ps = s;
+            }
         }
-        else
+        break;
+        case '=':
         {
-          fseek(f, -1, SEEK_CUR);
-          cout << "<p,15>  " << pa[15] << endl;
-          s->a = "p"; s->num = 15;
-          ps->next = s;
-          ps = s;
+            buf = fgetc(f);
+            if (buf == '=')
+            {
+                cout << "<p,16>  " << pa[16] << endl;
+                s->a = "p"; s->num = 16;
+                ps->next = s;
+                ps = s;
+            }
+            else
+            {
+                fseek(f, -1, SEEK_CUR);
+                cout << "<p,17>  " << pa[17] << endl;
+                s->a = "p"; s->num = 17;
+                ps->next = s;
+                ps = s;
+            }
         }
-      }
-      break;
-      case '=':
-      {
-        buf = fgetc(f);
-        if (buf == '=')
-        {
-          cout << "<p,16>  " << pa[16] << endl;
-          s->a = "p"; s->num = 16;
-          ps->next = s;
-          ps = s;
-        }
-        else
-        {
-          fseek(f, -1, SEEK_CUR);
-          cout << "<p,17>  " << pa[17] << endl;
-          s->a = "p"; s->num = 17;
-          ps->next = s;
-          ps = s;
-        }
-      }
-      break;
-      case '|':
-      { buf = fgetc(f);
+        break;
+        case '|':
+        {   buf = fgetc(f);
         if (buf == '|')
         {
-          cout << "<p,19>  " << pa[19] << endl;
-          s->a = "p"; s->num = 19;
-          ps->next = s;
-          ps = s;
+            cout << "<p,19>  " << pa[19] << endl;
+            s->a = "p"; s->num = 19;
+            ps->next = s;
+            ps = s;
         }
-      } break;
-      }
+        } break;
+        }
 
-  }
-  head = head->next;
-  ps->next = NULL;
-  return head;
+    }
+    head = head->next;
+    ps->next = NULL;
+    return head;
 }
 void print1()
 {
-  int i = -1;
-  if (quaters.empty())
-    exit(0);
-  do
-  {
-    i++;
-    cout << quaters[i]->c << " " << quaters[i]->ta << " " << quaters[i]->tb << " " << quaters[i]->tc
-         << " " << quaters[i]->msg_a << " " << quaters[i]->msg_b << " " << quaters[i]->msg_c << endl;
-  } while (quaters[i] != quaters.back());
+    int i = -1;
+    if (quaters.empty())
+        exit(0);
+    do
+    {
+        i++;
+        cout << quaters[i]->c << " " << quaters[i]->ta << " " << quaters[i]->tb << " " << quaters[i]->tc
+            << " " << quaters[i]->msg_a << " " << quaters[i]->msg_b << " " << quaters[i]->msg_c << endl;
+    } while (quaters[i] != quaters.back());
 }
 int program()// 程序
 {
-  if (out_statement())
-    return 1;
+    if (out_statement())
+        return 1;
 }
 int out_statement()//外部声明
 {
-  if (func_def())
-    return 1;
+    if (func_def())
+        return 1;
 }
 int func_def()//函数定义
 {
-  a = new SYNBL;
-  s.push_back(a);
-  b = new PFINFL;
-  if (!type_explanation())
-  {
-    cout << "error1";
-    exit(0);
-  }
-  //填写部分函数表
-  s.back()->cat = "f";//函数
-  s.back()->p = b;//函数地址
-  //pf->push_back(b); //函数表
-  b->Level = lv; //函数层数
-  if (!p->a.compare("i"))//是否为标识符
-  {
-    s.back()->name = i[p->num];//函数名
-    cout << s.back()->name << " " << s.back()->typ << " " << s.back()->cat << endl;
+    a = new SYNBL;
+    s.push_back(a);
+    b = new PFINFL;
+    if (!type_explanation())
+    {
+        cout << "error1";
+        exit(0);
+    }
+    //填写部分函数表
+    s.back()->cat = "f";//函数
+    s.back()->p = b;//函数地址
+    //pf->push_back(b); //函数表
+    b->Level = lv; //函数层数
+    if (!p->a.compare("i"))//是否为标识符
+    {
+        s.back()->name = i[p->num];//函数名
+        cout << s.back()->name << " " << s.back()->typ << " " << s.back()->cat << endl;
+        p = p->next;
+    }
+    else if (p->a == "k" && p->num == 1)//是否为标识符
+    {
+        s.back()->name = "main";//函数名
+        //cout << s.back()->name << " " << s.back()->typ << " " << s.back()->cat << endl;
+        //cout << a->name << " " << a->typ << " " << a->cat << endl;
+        p = p->next;
+    }
+    else {
+        cout << "error2";
+        exit(0);
+    }
+    qc = new Quaternary;
+    quaters.push_back(qc);
+    quaters.back()->c = "function";
+    quaters.back()->ta = s.back()->name;
+    quaters.back()->tb = "begin";
+    qc = qc->next;
+    qc = NULL;
+    if (strcmp(pa[p->num], "("))
+    {
+        cout << "error3";
+        exit(0);
+    }
+    //函数声明();
     p = p->next;
-  }
-  else if (p->a == "k" && p->num == 1)//是否为标识符
-  {
-    s.back()->name = "main";//函数名
-    //cout << s.back()->name << " " << s.back()->typ << " " << s.back()->cat << endl;
-    //cout << a->name << " " << a->typ << " " << a->cat << endl;
+    if (strcmp(pa[p->num], ")"))
+    {
+        cout << "error4";
+        exit(0);
+    }
     p = p->next;
-  }
-  else {
-    cout << "error2";
-    exit(0);
-  }
-  if (strcmp(pa[p->num], "("))
-  {
-    cout << "error3";
-    exit(0);
-  }
-  //函数声明();
-  p = p->next;
-  if (strcmp(pa[p->num], ")"))
-  {
-    cout << "error4";
-    exit(0);
-  }
-  p = p->next;
-  if (strcmp(pa[p->num], "{"))
-  {
-    cout << "error5";
-    exit(0);
-  }
-  p = p->next;
-  complex_sentence();
-  if (strcmp(pa[p->num], "}"))
-  {
-    cout << "error6";
-    exit(0);
-  }
-  else return 1;
+    if (strcmp(pa[p->num], "{"))
+    {
+        cout << "error5";
+        exit(0);
+    }
+    p = p->next;
+    complex_sentence();
+    if (strcmp(pa[p->num], "}"))
+    {
+        cout << "error6";
+        exit(0);
+    }
+    else {
+        qc = new Quaternary;
+        quaters.push_back(qc);
+        quaters.back()->c = "function";
+        quaters.back()->tb = "end";
+        qc = qc->next;
+        qc = NULL;
+        return 1;
+    }
 }
 int type_explanation()//类型说明
 {
-  int n = 0;
-  //a->prior = a;
-  a->next = new SYNBL;
-  a = a->next;
-  a->next = NULL;
-  s.push_back(a);
-  if (p->a == "k")
-  {
-    if (!strcmp("void", key[p->num]))
-      n = 1;
-    else if (!strcmp("int", key[p->num]))
-      n = 2;
-    else if (!strcmp("char", key[p->num]))
-      n = 3;
-    else if (!strcmp("float", key[p->num]))
-      n = 4;
-    switch (n) {
-    case 1: s.back()->typ = "void"; break;
-    case 2: s.back()->typ = "int"; break;
-    case 3: s.back()->typ = "char"; break;
-    case 4: s.back()->typ = "float"; break;
-    default: return 0;
+    int n = 0;
+    //a->prior = a;
+    a->next = new SYNBL;
+    a = a->next;
+    a->next = NULL;
+    s.push_back(a);
+    if (p->a == "k")
+    {
+        if (!strcmp("void", key[p->num]))
+            n = 1;
+        else if (!strcmp("int", key[p->num]))
+            n = 2;
+        else if (!strcmp("char", key[p->num]))
+            n = 3;
+        else if (!strcmp("float", key[p->num]))
+            n = 4;
+        switch (n) {
+        case 1: s.back()->typ = "void"; break;
+        case 2: s.back()->typ = "int"; break;
+        case 3: s.back()->typ = "char"; break;
+        case 4: s.back()->typ = "float"; break;
+        default: return 0;
+        }
+        p = p->next;
+        return 1;
     }
-    p = p->next;
-    return 1;
-  }
-  else
-    return 0;
+    else
+        return 0;
 }
 int complex_sentence()//复合语句
 {
-  if (!statement_list())
-    sentence_list();
-  return 1;
+    qc = new Quaternary;
+    quaters.push_back(qc);
+    quaters.back()->c = "data";
+    quaters.back()->tb = "begin";
+    qc = qc->next;
+    qc = NULL;
+    if (!statement_list())
+    {
+        write_v();
+        qc = new Quaternary;
+        quaters.push_back(qc);
+        quaters.back()->c = "data";
+        quaters.back()->tb = "end";
+        qc = qc->next;
+        qc = NULL;
+        sentence_list();
+    }
+    return 1;
 }
 int sentence_list()//语句列表
 {
-  if (!sentence())
-    return 0;
-  if (sentence_list1())
-    return 1;
-  else return 1;
+    if (!sentence())
+        return 0;
+    if (sentence_list1())
+        return 1;
+    else return 1;
 }
 int sentence_list1()
 {
-  if (sentence_list())
-    return 1;
-  else return 0;
+    if (sentence_list())
+        return 1;
+    else return 0;
 }
 int statement_list()//声明列表
 {
-  if (!type_explanation())
-    return 0;
-  statement();
-  if (!pw(";"))
-  {
-    cout << "error9";
-    exit(0);
-  }
-  statement_list1();//是否要return
+    
+    if (!type_explanation())
+        return 0;
+    statement();
+    if (!pw(";"))
+    {
+        cout << "error9";
+        exit(0);
+    }
+    statement_list1();//是否要return
 }
 int statement_list1()//声明列表1
 {
-  if (!statement_list())
-    return 0;
+    if (!statement_list())
+        return 0;
 }
 int statement()//声明
 {
-  if (!direct_description())
-    return 0;
-  return 1;
+    if (!direct_description())
+        return 0;
+    return 1;
 }
 int direct_description()//直接说明符
 {
-  if (p->a.compare("i") != 0) //不是标识符
-  {
-    cout << "error10";
-    exit(0);
-  }
-  s.back()->name = i[p->num];//填写名称
-  s.back()->cat = "v";//填写种类
-  //cout << s.back()->name << " " << s.back()->typ << " " << s.back()->cat << endl;
-  // cout << a->name << " " << a->typ << " " << a->cat << endl;
-  p = p->next;
-  if (!direct_description1())
-    return 0;
-  return 1;
+    if (p->a.compare("i") != 0) //不是标识符
+    {
+        cout << "error10";
+        exit(0);
+    }
+    s.back()->name = i[p->num];//填写名称
+    s.back()->cat = "v";//填写种类
+    //cout << s.back()->name << " " << s.back()->typ << " " << s.back()->cat << endl;
+    // cout << a->name << " " << a->typ << " " << a->cat << endl;
+    p = p->next;
+    if (pw("="))
+    {
+        int j = 0;
+        if (p->a == "con")
+        {
+            while (con[j][0] != '\0')
+            {
+                if (!strcmp(con[p->num], con[j]))
+                    break;
+                j++;
+            }
+            s.back()->consl = con[j];
+            p = p->next;
+        }
+    }
+    if (!direct_description1())
+        return 0;
+    return 1;
 }
 int direct_description1()//直接说明符1
 {
-  if (pw("["))
-  {
-    //s.back()->typ = a->prior->typ;
-    //s.back()->name=p();填写符号表变量名，需要vector，但是似乎不用在这里填写
-    s.back()->cat = "a";
-    //填写数组表
-    if (p->a == "con")//填写数组表
-      p = p->next;
-    // exit(0);
-    if (!pw("]"))
+    if (pw("["))
     {
-      cout << "error11";
-      exit(0);
+        //s.back()->typ = a->prior->typ;
+        //s.back()->name=p();填写符号表变量名，需要vector，但是似乎不用在这里填写
+        s.back()->cat = "a";
+        //填写数组表
+        if (p->a == "con")//填写数组表
+            p = p->next;
+        // exit(0);
+        if (!pw("]"))
+        {
+            cout << "error11";
+            exit(0);
+        }
+        if (!direct_description1())
+            return 0;
+        else
+            return 1;
     }
-    if (!direct_description1())
-      return 0;
-    else
-      return 1;
-  }
-  if (pw(","))//下一个字符为,
-  {
-
-    //开辟总表下一个空间和vector下一空间
-    a->next = new SYNBL;
-    s.push_back(a->next);
-    s.back()->typ = a->typ;
-    //a->prior = a;是否还需要
-    a = a->next;
-    a->next = NULL;
-
-    //准备填表
-    if (p->a.compare("i") != 0) //不是标识符
+    if (pw(","))//下一个字符为,
     {
-      cout << "error12";
-      exit(0);
+
+        //开辟总表下一个空间和vector下一空间
+        a->next = new SYNBL;
+        s.push_back(a->next);
+        s.back()->typ = a->typ;
+        //a->prior = a;是否还需要
+        a = a->next;
+        a->next = NULL;
+
+        //准备填表
+        if (p->a.compare("i") != 0) //不是标识符
+        {
+            cout << "error12";
+            exit(0);
+        }
+        //如果是标识符
+        s.back()->name = i[p->num];//填写名称  //填写符号表变量名，需要vector
+        s.back()->cat = "v";//填写种类
+        //cout << s.back()->name << " " << s.back()->typ << " " << s.back()->cat << endl;
+        //cout << a->name << " " << a->typ << " " << a->cat << endl;
+        p = p->next;
+        if (pw("="))
+        {
+            int j = 0;
+            if (p->a == "con")
+            {
+                while (con[j][0] != '\0')
+                {
+                    if (!strcmp(con[p->num], con[j]))
+                        break;
+                }
+                s.back()->consl = con[j];
+                p = p->next;
+            }
+        }
+        if (!direct_description1())
+            return 0;
+        else
+            return 1;
     }
-    //如果是标识符
-    s.back()->name = i[p->num];//填写名称  //填写符号表变量名，需要vector
-    s.back()->cat = "v";//填写种类
-    //cout << s.back()->name << " " << s.back()->typ << " " << s.back()->cat << endl;
-    //cout << a->name << " " << a->typ << " " << a->cat << endl;
-    p = p->next;
-    if (!direct_description1())
-      return 0;
-    else
-      return 1;
-  }
-  return 0;
+    return 0;
 }
 int sentence()//语句
 {
-  if (give() || is_if())//
-    return 1;
-  else
-    return 0;
+    if (give() || is_if())//    
+        return 1;
+    else
+        return 0;
 }
 int give()//赋值表达式
 {
-  if (p->a.compare("i") != 0)
-    return 0;
-  iw.push_back(i[p->num]);//存等号左边标识符
-  p = p->next;
-  if (!pw("="))
-  {
-    cout << "error13" << endl;
-    exit(0);
-  }
-  qc = new Quaternary;
-  q_stack.push_back(qc);
-  q_stack.back()->c = '=';
-  ch.push_back("=");
-  q_stack.back()->ta = iw.back();
-  //四元式为 (=,a, , )
-  if (PLUS())
-  {
-    //填四元式结构体
-    q_stack.back()->tc = iw.back();
-
-    cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
-    //四元式为 (=,a, ,t)
-    //下面这步用来排除四元式序列栈顶为else  ,   ,   ,   ; if   ,   ,   , ; = a    tn   tn为一个式子且a=tn单独出现的情况
-    if (!q_stack.back()->c.compare("=") && t_word() && quaters_m.back()->c.compare("else") && quaters_m.back()->c.compare("if"))
+    if (p->a.compare("i") != 0)
+        return 0;
+    iw.push_back(i[p->num]);//存等号左边标识符
+    p = p->next;
+    if (!pw("="))
     {
-      quaters_m.back()->tc = q_stack.back()->ta;
+        cout << "error13" << endl;
+        exit(0);
+    }
+    qc = new Quaternary;
+    q_stack.push_back(qc);
+    q_stack.back()->c = '=';
+    ch.push_back("=");
+    q_stack.back()->ta = iw.back();
+    //四元式为 (=,a, , )
+    if (PLUS())
+    {
+        //填四元式结构体
+        q_stack.back()->tc = iw.back();
+
+        cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
+        //四元式为 (=,a, ,t)
+        //下面这步用来排除四元式序列栈顶为else  ,   ,   ,   ; if   ,   ,   , ; = a    tn   tn为一个式子且a=tn单独出现的情况
+        if (!q_stack.back()->c.compare("=") && t_word() && quaters_m.back()->c.compare("else") && quaters_m.back()->c.compare("if"))
+        {
+            quaters_m.back()->tc = q_stack.back()->ta;
+        }
+        else
+        {
+            quaters_m.push_back(q_stack.back());
+        }
+        //生成目标代码
+        q_stack.pop_back();
+        fill_msg();
+        fill_quaters();
+        quaters_m.clear();
+        if (pw(";"))
+            return 1;
     }
     else
     {
-      quaters_m.push_back(q_stack.back());
+        cout << "error14" << endl;
+        exit(0);
     }
-    //生成目标代码
-    q_stack.pop_back();
-    fill_msg();
-    fill_quaters();
-    quaters_m.clear();
-    if (pw(";"))
-      return 1;
-  }
-  else
-  {
-    cout << "error14" << endl;
-    exit(0);
-  }
 
 }
 int PLUS()
 {
-  if (!TIMES())
-    return 0;
-  if (!PLUS1())//错误
-    return 0;
-  return 1;
+    if (!TIMES())
+        return 0;
+    if (!PLUS1())//错误
+        return 0;
+    return 1;
 }
 int PLUS1()
 {
-  if (pw("+"))
-  {
-    if (!ch.back().compare(")"))
-      reset();
-    judge_write();
-    ch.push_back("+");
-    Quaternary_write();
-    //四元式(+,x,~,~)
-    if (!TIMES())
-      exit(0);
-    if (PLUS1())
+    if (pw("+"))
     {
-      if ((!ch.back().compare("+") || !ch.back().compare("-") || !ch.back().compare("*") || !ch.back().compare("/") || !ch.back().compare("%") || !ch.back().compare(")")))
-      {
-        Quaternary_finish();
+        if (!ch.back().compare(")"))
+            reset();
+        judge_write();
+        ch.push_back("+");
+        Quaternary_write();
+        //四元式(+,x,~,~) 
+        if (!TIMES())
+            exit(0);
+        if (PLUS1())
+        {
+            if ((!ch.back().compare("+") || !ch.back().compare("-") || !ch.back().compare("*") || !ch.back().compare("/") || !ch.back().compare("%") || !ch.back().compare(")")))
+            {
+                Quaternary_finish();
+                return 1;
+            }
+            else
+            {
+                return 1;
+            }
+        }
         return 1;
-      }
-      else
-      {
-        return 1;
-      }
     }
-    return 1;
-  }
-  else if (pw("-"))
-  {
-    if (!ch.back().compare(")"))
-      reset();
-    judge_write();
-    ch.push_back("-");
-    Quaternary_write();
-    //四元式(-,x,~,~)
-    if (!TIMES())
-      exit(0);
-    if (PLUS1())
+    else if (pw("-"))
     {
-      if ((!ch.back().compare("+") || !ch.back().compare("-") || !ch.back().compare("*") || !ch.back().compare("/") || !ch.back().compare("%") || !ch.back().compare(")")))
-      {
-        Quaternary_finish();
+        if (!ch.back().compare(")"))
+            reset();
+        judge_write();
+        ch.push_back("-");
+        Quaternary_write();
+        //四元式(-,x,~,~) 
+        if (!TIMES())
+            exit(0);
+        if (PLUS1())
+        {
+            if ((!ch.back().compare("+") || !ch.back().compare("-") || !ch.back().compare("*") || !ch.back().compare("/") || !ch.back().compare("%") || !ch.back().compare(")")))
+            {
+                Quaternary_finish();
+                return 1;
+            }
+            else
+            {
+                return 1;
+            }
+        }
         return 1;
-      }
-      else
-      {
-        return 1;
-      }
     }
-    return 1;
-  }
-  else if (!strcmp(pa[p->num], ";") || !strcmp(pa[p->num], ")"))
-    return 1;
+    else if (!strcmp(pa[p->num], ";") || !strcmp(pa[p->num], ")"))
+        return 1;
 }
 int TIMES()
 {
-  if (!BASE())
-    return 0;
-  if (!TIMES1())
-    return 0;
-  return 1;
+    if (!BASE())
+        return 0;
+    if (!TIMES1())
+        return 0;
+    return 1;
 }
 int TIMES1()
 {
-  if (pw("*"))
-  {
-    if (!ch.back().compare(")"))
-      reset();
-    judge_write();
-    ch.push_back("*");
-    Quaternary_write();
-    if (!BASE())
-      exit(0);
-    if (!TIMES1())
-      return 1;
-    return 1;
-  }
-  else if (pw("/"))
-  {
-    if (!ch.back().compare(")"))
-      reset();
-    judge_write();
-    ch.push_back("/");
-    Quaternary_write();
-    if (!BASE())
-      exit(0);
-    if (!TIMES1())
-      return 1;
-    return 1;
-  }
-  else if (pw("%"))
-  {
-    if (!ch.back().compare(")"))
-      reset();
-    judge_write();
-    ch.push_back("%");
-    Quaternary_write();
-    if (!BASE())
-      exit(0);
-    if (!TIMES1())
-      return 1;
-    return 1;
-  }
-  else if ((!strcmp(pa[p->num], ";") || !strcmp(pa[p->num], ")")) && (!ch.back().compare("*") || !ch.back().compare("/") || !ch.back().compare("%") || !ch.back().compare(")")))
-  {
-    Quaternary_finish();
-    return 1;
-  }
-  else
-    return 1;
+    if (pw("*"))
+    {
+        if (!ch.back().compare(")"))
+            reset();
+        judge_write();
+        ch.push_back("*");
+        Quaternary_write();
+        if (!BASE())
+            exit(0);
+        if (!TIMES1())
+            return 1;
+        return 1;
+    }
+    else if (pw("/"))
+    {
+        if (!ch.back().compare(")"))
+            reset();
+        judge_write();
+        ch.push_back("/");
+        Quaternary_write();
+        if (!BASE())
+            exit(0);
+        if (!TIMES1())
+            return 1;
+        return 1;
+    }
+    else if (pw("%"))
+    {
+        if (!ch.back().compare(")"))
+            reset();
+        judge_write();
+        ch.push_back("%");
+        Quaternary_write();
+        if (!BASE())
+            exit(0);
+        if (!TIMES1())
+            return 1;
+        return 1;
+    }
+    else if ((!strcmp(pa[p->num], ";") || !strcmp(pa[p->num], ")")) && (!ch.back().compare("*") || !ch.back().compare("/") || !ch.back().compare("%") || !ch.back().compare(")")))
+    {
+        Quaternary_finish();
+        return 1;
+    }
+    else
+        return 1;
 }
 int BASE()
 {
-  if (is_icon())
+    if (is_icon())
+        return 1;
+    if (!p->a.compare("con"))
+    {
+        iw.push_back(con[p->num]);
+        p = p->next;
+        return 1;
+    }
+    //if (字符串())
+    //    return 1;
+    if (pw("("))
+    {
+        ch.push_back("(");
+        PLUS();
+        if (!pw(")"))
+            exit(0);
+        ch.push_back(")");
+        if (!strcmp(pa[p->num], ";"))
+            reset();
+        return 1;
+    }
+    else
+        return 0;
     return 1;
-  if (!p->a.compare("con"))
-  {
-    iw.push_back(con[p->num]);
-    p = p->next;
-    return 1;
-  }
-  //if (字符串())
-  //    return 1;
-  if (pw("("))
-  {
-    ch.push_back("(");
-    PLUS();
-    if (!pw(")"))
-      exit(0);
-    ch.push_back(")");
-    if (!strcmp(pa[p->num], ";"))
-      reset();
-    return 1;
-  }
-  else
-    return 0;
-  return 1;
 }
 int is_icon()
 {
-  int j = 1;
-  if (!p->a.compare("i"))
-  {
-    while (s[j - 1] != s.back())
+    int j = 1;
+    if (!p->a.compare("i"))
     {
-      if (!s[j]->name.compare(i[p->num]) && !s[j]->typ.compare("int"))
-      {
-        iw.push_back(i[p->num]);
-        p = p->next;
-        return 1;
-      }
-      j++;
+        while (s[j - 1] != s.back())
+        {
+            if (!s[j]->name.compare(i[p->num]) && !s[j]->typ.compare("int"))
+            {
+                iw.push_back(i[p->num]);
+                p = p->next;
+                return 1;
+            }
+            j++;
+        }
+        return 0;
     }
-    return 0;
-  }
-  else
-    return 0;
+    else
+        return 0;
 }
 int pw(string b)
 {
-  if (p->a.compare("p") != 0)
-    return 0;
-  else
-  {
-    if (!b.compare(pa[p->num]))
+    if (p->a.compare("p") != 0)
+        return 0;
+    else
     {
-      p = p->next;
-      return 1;
+        if (!b.compare(pa[p->num]))
+        {
+            p = p->next;
+            return 1;
+        }
+        else return 0;
     }
-    else return 0;
-  }
 }
 int pi(string b)
 {
-  if (p->a.compare("k") != 0)
-    return 0;
-  else
-  {
-    if (!b.compare(key[p->num]))
+    if (p->a.compare("k") != 0)
+        return 0;
+    else
     {
-      p = p->next;
-      return 1;
+        if (!b.compare(key[p->num]))
+        {
+            p = p->next;
+            return 1;
+        }
+        else return 0;
     }
-    else return 0;
-  }
 }
 void print()
 {
-  int i = 1;
-  while (s[i] != s.back())
-  {
-    cout << s[i]->name << " " << s[i]->typ << " " << s[i]->cat << endl;
-    i++;
-  }
+    int i = 1;
+    while (s[i] != s.back())
+    {
+        cout << s[i]->name << " " << s[i]->typ << " " << s[i]->cat << endl;
+        i++;
+    }
 }
 void judge_write()//判断是不是可以直接进行的a*b类运算
 {
-  if (!ch.back().compare("*") || !ch.back().compare("/") || !ch.back().compare("%"))
-  {
-    q_stack.back()->tb = iw.back();
-    if (!judge_used())
+    if (!ch.back().compare("*") || !ch.back().compare("/") || !ch.back().compare("%"))
     {
-      q_stack.back()->tc = t[t_num];//t_num是用过的中间变量t的个数
-      iw.push_back(t[t_num]);
-      cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
-      quaters_m.push_back(q_stack.back());
-      q_stack.pop_back();
-      t_num++;
+        q_stack.back()->tb = iw.back();
+        if (!judge_used())
+        {
+            q_stack.back()->tc = t[t_num];//t_num是用过的中间变量t的个数
+            iw.push_back(t[t_num]);
+            cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
+            quaters_m.push_back(q_stack.back());
+            q_stack.pop_back();
+            t_num++;
+        }
     }
-  }
 }
 void Quaternary_write()
 {
-  qc = qc->next;
-  qc = new Quaternary;
-  q_stack.push_back(qc);
-  q_stack.back()->c = ch.back();
-  q_stack.back()->ta = iw.back();
+    qc = qc->next;
+    qc = new Quaternary;
+    q_stack.push_back(qc);
+    q_stack.back()->c = ch.back();
+    q_stack.back()->ta = iw.back();
 }
 void Quaternary_write_if()
 {
-  qc = qc->next;
-  qc = new Quaternary;
-  q_stack.push_back(qc);
-  q_stack.back()->c = ch.back();
+    qc = qc->next;
+    qc = new Quaternary;
+    q_stack.push_back(qc);
+    q_stack.back()->c = ch.back();
 }
 void Quaternary_write_end()
 {
-  qc = qc->next;
-  qc = new Quaternary;
-  qc->c = "if";
-  qc->tb = "end";
-  quaters.push_back(qc);
+    qc = qc->next;
+    qc = new Quaternary;
+    qc->c = "if";
+    qc->tb = "end";
+    quaters.push_back(qc);
 }
 void Quaternary_finish()//四则运算四元式的最后填写和输出
 {
-  q_stack.back()->tb = iw.back();
-  if (!judge_used())
-  {
-    q_stack.back()->tc = t[t_num];
-    iw.push_back(t[t_num]);
-    cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
-    quaters_m.push_back(q_stack.back());
-    q_stack.pop_back();
-    t_num++;
-  }
+    q_stack.back()->tb = iw.back();
+    if (!judge_used())
+    {
+        q_stack.back()->tc = t[t_num];
+        iw.push_back(t[t_num]);
+        cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
+        quaters_m.push_back(q_stack.back());
+        q_stack.pop_back();
+        t_num++;
+    }
 }
 void Quaternary_finish_if()//if语句四元式的最后填写和输出
 {
-  q_stack.back()->tb = iw.back();
-  iw.push_back(t[t_num]);
-  cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
-  quaters.push_back(q_stack.back());
-  q_stack.pop_back();
+    q_stack.back()->tb = iw.back();
+    iw.push_back(t[t_num]);
+    cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
+    quaters.push_back(q_stack.back());
+    q_stack.pop_back();
+}
+void Quaternary_finish_condition()//if语句四元式的最后填写和输出
+{
+    q_stack.back()->tb = iw.back();
+    if (!judge_used())
+    {
+        q_stack.back()->tc = t[t_num];
+        iw.push_back(t[t_num]);
+        cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
+        quaters.push_back(q_stack.back());
+        q_stack.pop_back();
+        t_num++;
+    }
 }
 void Quaternary_finish_else()//else语句四元式的最后填写和输出
 {
-  cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
-  quaters.push_back(q_stack.back());
-  q_stack.pop_back();
+    cout << q_stack.back()->c << " " << q_stack.back()->ta << " " << q_stack.back()->tb << " " << q_stack.back()->tc << endl;
+    quaters.push_back(q_stack.back());
+    q_stack.pop_back();
 }
 int is_if()
 {
 
-  if (!pi("if"))
-    return 0;
-  ch.push_back("if");
-  Quaternary_write_if();
-  if (!pw("("))
-    exit(0);
-  if (!condition())
-    exit(0);
-  Quaternary_finish_if();
-  if (!pw(")"))
-    exit(0);
-  if (pw("{"))
-  {
-    if (!sentence_list())
-      exit(0);
-    if (!pw("}"))
-      exit(0);
-  }
-  else if (!sentence())
-    exit(0);
-  if (!pi("else"))
-    return 1;
-  else
-  {
-    ch.push_back("else");
+    if (!pi("if"))
+        return 0;
+    ch.push_back("if");
     Quaternary_write_if();
-    Quaternary_finish_else();
+    if (!pw("("))
+        exit(0);
+    if (!condition())
+        exit(0);
+    Quaternary_finish_if();
+    if (!pw(")"))
+        exit(0);
     if (pw("{"))
     {
-      if (!sentence_list())
-        exit(0);
-      if (!pw("}"))
-        exit(0);
-      Quaternary_write_end();
-      return 1;
+        if (!sentence_list())
+            exit(0);
+        if (!pw("}"))
+            exit(0);
     }
     else if (!sentence())
-      exit(0);
-    Quaternary_write_end();
-    return 1;
-  }
+        exit(0);
+    if (!pi("else"))
+        return 1;
+    else
+    {
+        ch.push_back("else");
+        Quaternary_write_if();
+        Quaternary_finish_else();
+        if (pw("{"))
+        {
+            if (!sentence_list())
+                exit(0);
+            if (!pw("}"))
+                exit(0);
+            Quaternary_write_end();
+            return 1;
+        }
+        else if (!sentence())
+            exit(0);
+        Quaternary_write_end();
+        return 1;
+    }
 
 }
 int condition()
 {
-  string a;
-  if (PLUS())
-  {
-    a = pa[p->num];
-    if (!pw(">") && !pw(">=") && !pw("<") && !pw("<=") && !pw("=="))
-      return 1;
-    else
+    string a;
+    if (PLUS())
     {
-      ch.push_back(a);
-      Quaternary_write();
-      //填写四元式(关系符号，plus的结果， ， )
-      if (!PLUS())
-        exit(0);
-      Quaternary_finish();
-      //填写四元式(关系符号，plus的结果，plus的结果，t )
-      return 1;
+        a = pa[p->num];
+        if (!pw(">") && !pw(">=") && !pw("<") && !pw("<=") && !pw("=="))
+            return 1;
+        else
+        {
+            ch.push_back(a);
+            Quaternary_write();
+            //填写四元式(关系符号，plus的结果， ， )
+            if (!PLUS())
+                exit(0);
+            Quaternary_finish_condition();
+            //填写四元式(关系符号，plus的结果，plus的结果，t )
+            return 1;
+        }
     }
-  }
-  else return 0;
-  //else if()做字符的判断
+    else return 0;
+    //else if()做字符的判断
 }
 int judge_used()
 {
-  int i = -1;
-  if (quaters_m.empty())
+    int i = -1;
+    if (quaters_m.empty())
+        return 0;
+    do
+    {
+        i++;
+        if (!quaters_m[i]->ta.compare(q_stack.back()->ta))
+            if (!quaters_m[i]->tb.compare(q_stack.back()->tb))
+                if (!quaters_m[i]->c.compare(q_stack.back()->c))
+                {
+                    iw.push_back(quaters_m[i]->tc);
+                    q_stack.pop_back();
+                    return 1;
+                }
+    } while (quaters_m[i] != quaters_m.back());
     return 0;
-  do
-  {
-    i++;
-    if (!quaters_m[i]->ta.compare(q_stack.back()->ta))
-      if (!quaters_m[i]->tb.compare(q_stack.back()->tb))
-        if (!quaters_m[i]->c.compare(q_stack.back()->c))
-        {
-          iw.push_back(quaters_m[i]->tc);
-          q_stack.pop_back();
-          return 1;
-        }
-  } while (quaters_m[i] != quaters_m.back());
-  return 0;
 }
 void reset()
 {
-  while (ch.back().compare("("))
-  {
+    while (ch.back().compare("("))
+    {
+        ch.pop_back();
+    }
     ch.pop_back();
-  }
-  ch.pop_back();
 }
 int t_word()
 {
-  int i = 0;
-  while (i < 20)
-  {
-    if (!q_stack.back()->tc.compare(t[i]))
-      return 1;
-    i++;
-  }
-  return 0;
+    int i = 0;
+    while (i < 20)
+    {
+        if (!q_stack.back()->tc.compare(t[i]))
+            return 1;
+        i++;
+    }
+    return 0;
 }
 void fill_msg()
 {
-  string the_last;
-  reverse(quaters_m.begin(), quaters_m.end());
-  vector <string> msg_stack;
-  the_last = quaters_m[0]->tc;
-  int i = -1;
-  //if (quaters_m.empty())
-  //return 0;
-  do
-  {
-    i++;
-    quaters_m[i]->msg_a = "1";
-    quaters_m[i]->msg_b = "1";
-    quaters_m[i]->msg_c = "1";
-    if (!find_in_msg_stack(the_last, msg_stack))
+    string the_last;
+    reverse(quaters_m.begin(), quaters_m.end());
+    vector <string> msg_stack;
+    the_last = quaters_m[0]->tc;
+    int i = -1;
+    //if (quaters_m.empty())
+        //return 0;
+    do
     {
+        i++;
+        quaters_m[i]->msg_a = "1";
+        quaters_m[i]->msg_b = "1";
+        quaters_m[i]->msg_c = "1";
+        if (!find_in_msg_stack(the_last, msg_stack))
+        {
 
-      if (quaters_m[i]->ta == the_last)
-      {
-        quaters_m[i]->msg_a = "0";
-        msg_stack.push_back(the_last);
-      }
-      if (quaters_m[i]->tb == the_last)
-      {
-        quaters_m[i]->msg_b = "0";
-        msg_stack.push_back(the_last);
-      }
-    }
-    if (quaters_m[i]->ta[0] == 't' && !find_in_msg_stack(quaters_m[i]->ta, msg_stack))
-    {
-      quaters_m[i]->msg_a = "0";
-      msg_stack.push_back(quaters_m[i]->ta);
-    }
-    if (quaters_m[i]->tb[0] == 't' && !find_in_msg_stack(quaters_m[i]->tb, msg_stack))
-    {
-      quaters_m[i]->msg_b = "0";
-      msg_stack.push_back(quaters_m[i]->tb);
-    }
-    if (quaters_m[i]->tc[0] == 't' && !find_in_msg_stack(quaters_m[i]->tc, msg_stack))
-    {
-      quaters_m[i]->msg_c = "0";
-      msg_stack.push_back(quaters_m[i]->tc);
-    }
+            if (quaters_m[i]->ta == the_last)
+            {
+                quaters_m[i]->msg_a = "0";
+                msg_stack.push_back(the_last);
+            }
+            if (quaters_m[i]->tb == the_last)
+            {
+                quaters_m[i]->msg_b = "0";
+                msg_stack.push_back(the_last);
+            }
+        }
+        if (quaters_m[i]->ta[0] == 't' && !find_in_msg_stack(quaters_m[i]->ta, msg_stack))
+        {
+            quaters_m[i]->msg_a = "0";
+            msg_stack.push_back(quaters_m[i]->ta);
+        }
+        if (quaters_m[i]->tb[0] == 't' && !find_in_msg_stack(quaters_m[i]->tb,msg_stack))
+        {
+            quaters_m[i]->msg_b = "0";
+            msg_stack.push_back(quaters_m[i]->tb);
+        }
+        if (quaters_m[i]->tc[0] == 't' && !find_in_msg_stack(quaters_m[i]->tc, msg_stack))
+        {
+            quaters_m[i]->msg_c = "0";
+            msg_stack.push_back(quaters_m[i]->tc);
+        }
 
-  } while (quaters_m[i] != quaters_m.back());
-  reverse(quaters_m.begin(), quaters_m.end());
+    } while (quaters_m[i] != quaters_m.back());
+    reverse(quaters_m.begin(), quaters_m.end());
 }
 int find_in_msg_stack(string a, vector <string> msg_stack)
 {
-  int i = -1;
-  if (msg_stack.empty())
-    return 0;
-  do
-  {
-    i++;
-    if (msg_stack[i] == a)
+    int i = -1;
+    if (msg_stack.empty())
+        return 0;
+    do
     {
-      return 1;
-    }
-  } while (msg_stack[i] != msg_stack.back());
-  return 0;
+        i++;
+            if (msg_stack[i] == a)
+            {
+                return 1;
+            }
+    } while (msg_stack[i] != msg_stack.back());
+    return 0;
 }
 void fill_quaters()
 {
-  int i = -1;
-  do
-  {
-    i++;
-    quaters.push_back(quaters_m[i]);
-  } while (quaters_m[i] != quaters_m.back());
+    int i = -1;
+    do
+    {
+        i++;
+        quaters.push_back(quaters_m[i]);
+    } while (quaters_m[i] != quaters_m.back());
 }
 void produce_final_code()
 {
-  cout << "DSEG" << '\t' << "SEGMENT" << endl;
-  string R[8][3];
-  int i = -1;
-  do
-  {
-    if (quaters[i]->c == "int")
-    {
-      cout << quaters[i]->tc << '\t' << "DB" << '\t';
-      if (quaters[i]->ta != " ")
-        cout << quaters[i]->ta << endl;
-      else
-        cout << "?" << endl;
-    }
-    if (quaters[i]->c == "=")
-    {
-      if (find_in_dseg(quaters[i]->ta))//如果还没有取出,函数返回值为在数据段的序号,顺便把这个数据从数据段删除(还没做)
-      {
-        cout << '\t' << "LEA" << '\t' << "SI," << quaters[i]->ta << endl;
-        cout << "MOV" << R[find_empty_R(R)][1] << "[SI+" << 2 * find_in_dseg(quaters[i]->ta) << "]" << endl;
-        R[find_empty_R(R)][2] = "1"; //把存储ta的寄存器活跃状态设为1
-        R[find_empty_R(R)][1] = quaters[i]->ta; //把存储ta的寄存器内容改为ta
-      }
-        if (is_con(quaters[i]->tc))//如果被操作数是常数
-        {
-          cout << "MOV" << '\t' << R[find_R(R, quaters[i]->ta)][0] << '\t' << quaters[i]->tc << endl;
-          R[find_R(R, quaters[i]->ta)][3] = "1";
-        }
-        else if (find_in_dseg(quaters[i]->tc))
-        {
-          cout << "MOV" << '\t' << R[find_R(R, quaters[i]->ta)][0] << '\t' << "[SI+" << 2 * find_in_dseg(quaters[i]->tc) << "]" << endl;
-        }
-        else if (find_r(R, quaters[i]->tc))
-        {
-          cout << "MOV" << '\t' << R[find_R(quaters[i]->ta)][0] << '\t' << R[find_R(quaters[i]->tc)][0] << endl;
-        }
-    }
-    if(quaters[i]->c == "+")
-    {
-      
-    }
-    i++;
-    //新建文件
 
-  } while (quaters[i] != quaters.back());
+    string R[8][3];
+    R[0][0] = "BL";
+    R[1][0] = "BH";
+    R[2][0] = "DL";
+    R[3][0] = "DH";
+    R[4][0] = "CL";
+    R[5][0] = "CH";
+    R[6][0] = "AL";
+    R[7][0] = "AH";
+    R[0][2] = "0";
+    R[1][2] = "0";
+    R[2][2] = "0";
+    R[3][2] = "0";
+    R[4][2] = "0";
+    R[5][2] = "0";
+    R[6][2] = "0";
+    R[7
+    ][2] = "0";
+    int i = -1;
+    int j = 0;
+    do
+    {
+         i++;
+        if (quaters[i]->c == "data")
+        {
+            
+            i = produce_dseg(i);
+            cout << "CSEG" << '\t' << "SEGMENT" << endl;
+            cout <<  '\t' << "ASSUME" << '\t' <<"CS:CSEG,DS:DSEG"<<endl;
+            cout << "START:" << '\t' << "MOV" << '\t' << "AX,DSEG" << endl;
+            cout <<  '\t' << "MOV" << '\t' << "DS,AX" << endl;
+            cout << '\t' << "LEA" << '\t' << "SI," << "DATA" << endl;
+        }
+        if (quaters[i]->c == "=")
+        {
+            produce_finalcode("MOV", R, &i);
+        }
+          if (quaters[i]->c == "+")
+          {
+               produce_finalcode_add("ADD", R, &i);
+           }
+          if (quaters[i]->c == "*")
+          {
+               produce_finalcode_mul("MUL", R, &i);
+          }
+          if (quaters[i]->c == "if"&& quaters[i]->tb != "end")
+          {
+              if_stack.push_back(label[j]);
+              j++;
+          }
+          if (quaters[i]->c == ">"|| quaters[i]->c == "<"||quaters[i]->c == ">="||quaters[i]->c == "<="||quaters[i]->c == "==")
+          {
+              produce_finalcode_if(quaters[i]->c, R, &i);
+              if (quaters[i]->c == ">")
+                  cout << '\t' << "JB\t" << label[j] << endl;
+              else if (quaters[i]->c == "<")
+                  cout << '\t' << "JA\t" << label[j] << endl;
+          }
+          if (quaters[i]->c == "else")
+          {
+              else_stack.push_back(label[j]);
+              cout << "\tJMP\t" << else_stack.back() << endl;
+              cout << if_stack.back() <<":"<< endl;
+              if_stack.pop_back();
+              j++;
+          }
+          if (quaters[i]->c == "if"&& quaters[i]->tb== "end")
+          {
+              cout << else_stack.back() << ":" << endl;
+              else_stack.pop_back();
+          }
+        //新建文件
+
+     } while (quaters[i] != quaters.back());
+     cout << "\tMOV\tAH,4CH" << endl << "\tINT 21H" << endl;
+     cout << "CSEG\tENDS" << endl << "\tEND START";
+}
+void produce_finalcode(string a, string R[8][3],int *i)
+{
+    int ra = 0;
+    int rb = 0;
+    int rc = 0;
+    int position;
+    int rom;
+    if (find_in_dseg(quaters[*i]->ta, &position) != -1)//如果还没有取出,函数返回值为在数据段的序号,顺便把这个数据从数据段删除(还没做)
+    {
+        rom = find_empty_R(R);
+        cout << '\t' << a << '\t' << R[rom][0] << "," << "[SI+" << 4 * position << "]" << endl;
+        R[rom][2] = "1"; //把存储ta的寄存器活跃状态设为1
+        R[rom][1] = quaters[*i]->ta; //把存储ta的寄存器内容改为ta
+    }
+    if (is_con(quaters[*i]->tc))//如果被操作数是常数
+    {
+        ra = find_R(R, quaters[*i]->ta);
+        cout << '\t' << a << '\t' << R[ra][0] << "," << quaters[*i]->tc << endl;
+        R[ra][2] = "0";
+    }
+    else if (find_in_dseg(quaters[*i]->tc, &rc))
+    {
+        ra = find_R(R, quaters[*i]->ta);
+        cout << '\t' << a << '\t' << R[ra][0] << "," << "[SI+" << 4 * rc << "]" << endl;
+    }
+    else if (find_R(R, quaters[*i]->tc) != 8)
+    {
+        ra = find_R(R, quaters[*i]->ta);
+        rc = find_R(R, quaters[*i]->tc);
+        cout << '\t' << a << '\t' << R[ra][0] << '\t' << R[rc][0] << endl;
+    }
+    R[rom][2] = "0";
+    cout << '\t' << a << '\t' << "[SI+" << 4 * position << "]" << "," << R[rom][0] << endl;
+}
+void produce_finalcode_mul(string a, string R[8][3], int* i)
+{
+    int ra = 0;
+    int rb = 0;
+    int rc = 0;
+    int position;
+    if (find_in_dseg(quaters[*i]->ta, &position) != -1)//如果还没有取出,函数返回值为在数据段的序号,顺便把这个数据从数据段删除(还没做)
+    {
+        ra = find_empty_R(R);
+        cout << '\t' << "MOV" << '\t' << R[ra][0] << "," << "[SI+" << 4 * position << "]" << endl;
+        R[ra][2] = quaters[*i]->msg_a; //把存储ta的寄存器活跃状态设为1
+        R[ra][1] = quaters[*i]->ta; //把存储ta的寄存器内容改为ta
+    }
+    else if (is_con(quaters[*i]->ta))//如果操作数是常数
+    {
+        ra = find_empty_R(R);
+        cout << '\t' << "MOV" << '\t' << R[ra][0] <<","<< quaters[*i]->ta << endl;
+        R[ra][2] = "0";
+    }
+    else if (find_R(R, quaters[*i]->ta))
+    {
+        ra = find_R(R, quaters[*i]->ta);
+        R[ra][2] = quaters[*i]->msg_a;
+    }
+    if (is_con(quaters[*i]->tb))//如果被操作数是常数
+    {
+        cout << '\t' << "MOV" << '\t' << "AL," << quaters[*i]->tb << endl;
+    }
+    else if (find_in_dseg(quaters[*i]->tb, &position)!=-1)
+    {
+        cout << '\t' << "MOV" << '\t' << "AL," << "[SI+" << 4 * position << "]" << endl;
+    }
+    else if (find_R(R, quaters[*i]->tb) != 8)
+    {
+        rb = find_R(R, quaters[*i]->tb);
+        cout << '\t' << "MOV" << '\t' << "AL,"<< R[rb][0] << endl;
+    }
+    cout << '\t' << a << '\t' << "AL" << endl;
+    if (find_in_dseg(quaters[*i]->tc, &position) != -1)
+    {
+        cout<<  '\t' << "MOV" << '\t' << "[SI+" << 2 * position << "]," << "AX" << endl;
+    }
+    else if (find_R(R, quaters[*i]->tc)!=8)
+    {
+        rc = find_R(R, quaters[*i]->tc);
+        cout << '\t' << "MOV" << '\t' << R[rc][0] << ",AX" << endl;
+        R[rc][2] = quaters[*i]->msg_c;
+    }
+    else
+    {
+        rc = find_empty_R(R);
+        cout << '\t' << "MOV" << '\t' << R[rc][0] << ",AX" << endl;
+        R[rc][2] = quaters[*i]->msg_c;
+        R[rc][1] = quaters[*i]->tc;
+    }
+    if (find_in_dseg(R[ra][1], &position) != -1)
+        R[ra][2] = "0";
+}
+void produce_finalcode_add(string a, string R[8][3], int* i)
+{
+    int ra = 0;
+    int rb = 0;
+    int rc = 0;
+    int position;
+    if (find_in_dseg(quaters[*i]->ta, &position) != -1)//如果还没有取出,函数返回值为在数据段的序号,顺便把这个数据从数据段删除(还没做)
+    {
+        ra = find_empty_R(R);
+        cout << '\t' << "MOV" << '\t' << R[ra][0] << "," << "[SI+" << 4 * position << "]" << endl;
+        R[ra][2] = quaters[*i]->msg_a; //把存储ta的寄存器活跃状态设为1
+        R[ra][1] = quaters[*i]->ta; //把存储ta的寄存器内容改为ta
+    }
+    else if (is_con(quaters[*i]->ta))//如果操作数是常数
+    {
+        ra = find_empty_R(R);
+        cout << '\t' << "MOV" << '\t' << R[ra][0] << "," << quaters[*i]->ta << endl;
+        R[ra][2] = quaters[*i]->msg_a;
+    }
+    else if (find_R(R, quaters[*i]->ta) != 8)
+    {
+        ra = find_R(R, quaters[*i]->ta);
+        R[ra][2] = quaters[*i]->msg_a;
+    }
+    if (is_con(quaters[*i]->tb))//如果被操作数是常数
+    {
+        cout << '\t' << a << '\t' << R[ra][0] << "," << quaters[*i]->tb << endl;
+    }
+    else if (find_in_dseg(quaters[*i]->tb, &position) != -1)
+    {
+        cout << '\t' << a << '\t' << R[ra][0] << "," << "[SI+" << 4 * position << "]" << endl;
+    }
+    else if (find_R(R, quaters[*i]->tb)!=8)
+    {
+        rb = find_R(R, quaters[*i]->tb);
+        cout << '\t' << a << '\t' << R[ra][0] << "," << R[rb][0] << endl;
+        R[rb][2] = quaters[*i]->msg_b;
+    }
+    if (find_in_dseg(quaters[*i]->tc, &position) != -1)
+    {
+        cout << '\t' << "MOV" << '\t' << "[SI+" << 2 * position << "]," << R[ra][0] << endl;
+    }
+    else if (find_R(R, quaters[*i]->tc)!=8)
+    {
+        rc = find_R(R, quaters[*i]->tc);
+        cout << '\t' << "MOV" << '\t' << R[rc][0] << "," << R[ra][0] << endl;
+        R[rc][2] = quaters[*i]->msg_c;
+    }
+    else
+    {
+        rc = find_empty_R(R);
+        cout << '\t' << "MOV" << '\t' << R[rc][0] << "," << R[ra][0] << endl;
+        R[rc][2] = quaters[*i]->msg_c;
+        R[rc][1] = quaters[*i]->tc;
+    }
+    if (find_in_dseg(R[ra][1],&position)!=-1)
+        R[ra][2] = "0";
+}
+void produce_finalcode_if(string a, string R[8][3], int* i)
+{
+    int ra = 0;
+    int rb = 0;
+    int rc = 0;
+    int position;
+    if (find_in_dseg(quaters[*i]->ta, &position) != -1)//如果还没有取出,函数返回值为在数据段的序号,顺便把这个数据从数据段删除(还没做)
+    {
+        ra = find_empty_R(R);
+        cout << '\t' << "MOV" << '\t' << R[ra][0] << "," << "[SI+" << 4 * position << "]" << endl;
+        R[ra][2] = quaters[*i]->msg_a; //把存储ta的寄存器活跃状态设为1
+        R[ra][1] = quaters[*i]->ta; //把存储ta的寄存器内容改为ta
+    }
+    else if (is_con(quaters[*i]->ta))//如果操作数是常数
+    {
+        ra = find_empty_R(R);
+        cout << '\t' << "MOV" << '\t' << R[ra][0] << "," << quaters[*i]->ta << endl;
+        R[ra][2] = "0";
+    }
+    else if (find_R(R, quaters[*i]->ta))
+    {
+        ra = find_R(R, quaters[*i]->ta);
+        R[ra][2] = quaters[*i]->msg_a;
+    }
+    if (is_con(quaters[*i]->tb))//如果被操作数是常数
+    {
+        cout << '\t' << "CMP" << '\t' << R[ra][2] << quaters[*i]->tb << endl;
+    }
+    else if (find_in_dseg(quaters[*i]->tb, &position) != -1)
+    {
+        cout << '\t' << "CMP" << '\t' << R[ra][1] << ",[SI+" << 4 * position << "]" << endl;
+    }
+    else if (find_R(R, quaters[*i]->tb) != 8)
+    {
+        rb = find_R(R, quaters[*i]->tb);
+        cout << '\t' << "CMP" << '\t' << "AL," << R[rb][0] << endl;
+    }
+    if (find_in_dseg(R[ra][1], &position) != -1)
+        R[ra][2] = "0";
 }
 int find_empty_R(string R[8][3])
 {
-  for (int i = 0; i < 8; i++)
-  {
-    if (R[i][2] == "0")
+    for (int i = 0; i < 8; i++)
     {
-
-      return i;
+        if (R[i][2] == "0")
+        {
+            return i;
+        }
     }
-  }
 }
 int find_R(string R[8][3], string a)
 {
-  for (int i = 0; i < 8; i++)
-  {
-    if (R[i][0] == a && R[i][3] == "1")
-      return i;
-  }
-  cout << "cannot find it in ROM" << endl;
-  exit(0);
+    for (int i = 0; i < 8; i++)
+    {
+        if (R[i][1] == a && R[i][2] == "1")
+            return i;
+    }
+    return 8;
 }
 int is_con(string a)
 {
-  int j = 0;
-  while (con[j] != '\0')
-  {
-    if (!a.compare(con[j]))
-      return 1;
-  }
-  return 0;
+    int j = 0;
+     while (j<50)
+    {
+        if (!a.compare(con[j]))
+            return 1;
+        j++;
+    }
+    return 0;
+}
+int find_in_dseg(string a,int *p)
+{
+    int i = -1;
+    do {
+        i++;
+        if (!a.compare(dseg[i]))
+        {
+            //dseg[i] = "0";
+            *p = i;
+            return i;
+        }
+    } while (dseg[i] != dseg.back());
+        return -1;
+}
+int produce_dseg(int i)
+{
+    i++;
+    cout << "DSEG" << '\t' << "SEGMENT" << endl;
+    cout << "DATA" << '\t' << "DB" << '\t';
+    while (quaters[i]->c != "data")
+    {
+        if (quaters[i]->c == "int" && quaters[i]->tc != "")
+        {
+            cout << quaters[i]->tc << ",";
+            dseg.push_back(quaters[i]->ta);
+        }
+        i++;
+    }
+    cout << endl<< "DSEG" << '\t' << "ENDS" << endl;
+    return i;
+}
+void write_v()
+{
+    int j = 1;
+        while (s[j - 1] != s.back())
+        {
+            if (!s[j]->cat.compare("v") )
+            {
+                qc = new Quaternary;
+                quaters.push_back(qc);
+                quaters.back()->c = s[j]->typ;
+                quaters.back()->ta = s[j]->name;
+                quaters.back()->tc = s[j]->consl;
+                //quaters.back()->ta = s[j]->name;
+                qc = qc->next;
+                qc = NULL;
+            }
+            j++;
+        }
 }
