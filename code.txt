@@ -4,6 +4,7 @@
 #include<stdio.h>
 #include<string>
 #include<string.h>
+#include<fstream>
 using namespace std;
 #define _CRT_SECURE_NO_DEPRECATE
 #define _CRT_SECURE_NO_WARNINGS
@@ -55,7 +56,6 @@ int PLUS1();
 int TIMES();
 int TIMES1();
 int BASE();
-
 int pw(string b);
 typedef struct excel excel, * linklist;
 typedef struct PFINFL* PF;
@@ -152,6 +152,7 @@ char t[20][4] = { "t1","t2","t3","t4","t5","t6","t7","t8","t9","t10","t11","t12"
 string label[7] = { "A","B","C","D","E","F","G" };
 string middle_t;
 int t_num = 0;
+ofstream fout("C:/Users/machenike/Desktop/final.txt");
 int main(void)
 {
 
@@ -763,7 +764,6 @@ int give()//赋值表达式
         cout << "error14" << endl;
         exit(0);
     }
-
 }
 int PLUS()
 {
@@ -1227,7 +1227,7 @@ void fill_quaters()
 }
 void produce_final_code()
 {
-
+    
     string R[8][3];
     R[0][0] = "BL";
     R[1][0] = "BH";
@@ -1255,6 +1255,11 @@ void produce_final_code()
         {
             
             i = produce_dseg(i);
+            fout << "CSEG" << '\t' << "SEGMENT" << endl;
+            fout << '\t' << "ASSUME" << '\t' << "CS:CSEG,DS:DSEG" << endl;
+            fout << "START:" << '\t' << "MOV" << '\t' << "AX,DSEG" << endl;
+            fout << '\t' << "MOV" << '\t' << "DS,AX" << endl;
+            fout << '\t' << "LEA" << '\t' << "SI," << "DATA" << endl;
             cout << "CSEG" << '\t' << "SEGMENT" << endl;
             cout <<  '\t' << "ASSUME" << '\t' <<"CS:CSEG,DS:DSEG"<<endl;
             cout << "START:" << '\t' << "MOV" << '\t' << "AX,DSEG" << endl;
@@ -1269,6 +1274,10 @@ void produce_final_code()
           {
                produce_finalcode_add("ADD", R, &i);
            }
+          if (quaters[i]->c == "-")
+          {
+              produce_finalcode_add("SUB", R, &i);
+          }
           if (quaters[i]->c == "*")
           {
                produce_finalcode_mul("MUL", R, &i);
@@ -1282,13 +1291,21 @@ void produce_final_code()
           {
               produce_finalcode_if(quaters[i]->c, R, &i);
               if (quaters[i]->c == ">")
+              {
+                  fout << '\t' << "JB\t" << label[j] << endl;
                   cout << '\t' << "JB\t" << label[j] << endl;
+              }
               else if (quaters[i]->c == "<")
+              {
+                  fout << '\t' << "JA\t" << label[j] << endl;
                   cout << '\t' << "JA\t" << label[j] << endl;
+              }
           }
           if (quaters[i]->c == "else")
           {
               else_stack.push_back(label[j]);
+              fout << "\tJMP\t" << else_stack.back() << endl;
+              fout << if_stack.back() << ":" << endl;
               cout << "\tJMP\t" << else_stack.back() << endl;
               cout << if_stack.back() <<":"<< endl;
               if_stack.pop_back();
@@ -1296,14 +1313,18 @@ void produce_final_code()
           }
           if (quaters[i]->c == "if"&& quaters[i]->tb== "end")
           {
+              fout << else_stack.back() << ":" << endl;
               cout << else_stack.back() << ":" << endl;
               else_stack.pop_back();
           }
         //新建文件
 
      } while (quaters[i] != quaters.back());
+     fout << "\tMOV\tAH,4CH" << endl << "\tINT 21H" << endl;
+     fout << "CSEG\tENDS" << endl << "\tEND START";
      cout << "\tMOV\tAH,4CH" << endl << "\tINT 21H" << endl;
      cout << "CSEG\tENDS" << endl << "\tEND START";
+     fout.close();
 }
 void produce_finalcode(string a, string R[8][3],int *i)
 {
@@ -1315,6 +1336,7 @@ void produce_finalcode(string a, string R[8][3],int *i)
     if (find_in_dseg(quaters[*i]->ta, &position) != -1)//如果还没有取出,函数返回值为在数据段的序号,顺便把这个数据从数据段删除(还没做)
     {
         rom = find_empty_R(R);
+        fout << '\t' << a << '\t' << R[rom][0] << "," << "[SI+" << 4 * position << "]" << endl;
         cout << '\t' << a << '\t' << R[rom][0] << "," << "[SI+" << 4 * position << "]" << endl;
         R[rom][2] = "1"; //把存储ta的寄存器活跃状态设为1
         R[rom][1] = quaters[*i]->ta; //把存储ta的寄存器内容改为ta
@@ -1322,21 +1344,25 @@ void produce_finalcode(string a, string R[8][3],int *i)
     if (is_con(quaters[*i]->tc))//如果被操作数是常数
     {
         ra = find_R(R, quaters[*i]->ta);
+        fout << '\t' << a << '\t' << R[ra][0] << "," << quaters[*i]->tc << endl;
         cout << '\t' << a << '\t' << R[ra][0] << "," << quaters[*i]->tc << endl;
         R[ra][2] = "0";
     }
     else if (find_in_dseg(quaters[*i]->tc, &rc))
     {
         ra = find_R(R, quaters[*i]->ta);
+        fout << '\t' << a << '\t' << R[ra][0] << "," << "[SI+" << 4 * rc << "]" << endl;
         cout << '\t' << a << '\t' << R[ra][0] << "," << "[SI+" << 4 * rc << "]" << endl;
     }
     else if (find_R(R, quaters[*i]->tc) != 8)
     {
         ra = find_R(R, quaters[*i]->ta);
         rc = find_R(R, quaters[*i]->tc);
+        fout << '\t' << a << '\t' << R[ra][0] << '\t' << R[rc][0] << endl;
         cout << '\t' << a << '\t' << R[ra][0] << '\t' << R[rc][0] << endl;
     }
     R[rom][2] = "0";
+    fout << '\t' << a << '\t' << "[SI+" << 4 * position << "]" << "," << R[rom][0] << endl;
     cout << '\t' << a << '\t' << "[SI+" << 4 * position << "]" << "," << R[rom][0] << endl;
 }
 void produce_finalcode_mul(string a, string R[8][3], int* i)
@@ -1348,6 +1374,7 @@ void produce_finalcode_mul(string a, string R[8][3], int* i)
     if (find_in_dseg(quaters[*i]->ta, &position) != -1)//如果还没有取出,函数返回值为在数据段的序号,顺便把这个数据从数据段删除(还没做)
     {
         ra = find_empty_R(R);
+        fout << '\t' << "MOV" << '\t' << R[ra][0] << "," << "[SI+" << 4 * position << "]" << endl;
         cout << '\t' << "MOV" << '\t' << R[ra][0] << "," << "[SI+" << 4 * position << "]" << endl;
         R[ra][2] = quaters[*i]->msg_a; //把存储ta的寄存器活跃状态设为1
         R[ra][1] = quaters[*i]->ta; //把存储ta的寄存器内容改为ta
@@ -1355,6 +1382,7 @@ void produce_finalcode_mul(string a, string R[8][3], int* i)
     else if (is_con(quaters[*i]->ta))//如果操作数是常数
     {
         ra = find_empty_R(R);
+        fout << '\t' << "MOV" << '\t' << R[ra][0] << "," << quaters[*i]->ta << endl;
         cout << '\t' << "MOV" << '\t' << R[ra][0] <<","<< quaters[*i]->ta << endl;
         R[ra][2] = "0";
     }
@@ -1365,32 +1393,39 @@ void produce_finalcode_mul(string a, string R[8][3], int* i)
     }
     if (is_con(quaters[*i]->tb))//如果被操作数是常数
     {
+        fout << '\t' << "MOV" << '\t' << "AL," << quaters[*i]->tb << endl;
         cout << '\t' << "MOV" << '\t' << "AL," << quaters[*i]->tb << endl;
     }
     else if (find_in_dseg(quaters[*i]->tb, &position)!=-1)
     {
+        fout << '\t' << "MOV" << '\t' << "AL," << "[SI+" << 4 * position << "]" << endl;
         cout << '\t' << "MOV" << '\t' << "AL," << "[SI+" << 4 * position << "]" << endl;
     }
     else if (find_R(R, quaters[*i]->tb) != 8)
     {
         rb = find_R(R, quaters[*i]->tb);
+        fout << '\t' << "MOV" << '\t' << "AL," << R[rb][0] << endl;
         cout << '\t' << "MOV" << '\t' << "AL,"<< R[rb][0] << endl;
     }
-    cout << '\t' << a << '\t' << "AL" << endl;
+    fout << '\t' << a << '\t' << R[ra][0] << endl;
+    cout << '\t' << a << '\t' << R[ra][0] << endl;
     if (find_in_dseg(quaters[*i]->tc, &position) != -1)
     {
-        cout<<  '\t' << "MOV" << '\t' << "[SI+" << 2 * position << "]," << "AX" << endl;
+        fout << '\t' << "MOV" << '\t' << "[SI+" << 2 * position << "]," << "AL" << endl;
+        cout<<  '\t' << "MOV" << '\t' << "[SI+" << 2 * position << "]," << "AL" << endl;
     }
     else if (find_R(R, quaters[*i]->tc)!=8)
     {
         rc = find_R(R, quaters[*i]->tc);
-        cout << '\t' << "MOV" << '\t' << R[rc][0] << ",AX" << endl;
+        fout << '\t' << "MOV" << '\t' << R[rc][0] << ",AL" << endl;
+        cout << '\t' << "MOV" << '\t' << R[rc][0] << ",AL" << endl;
         R[rc][2] = quaters[*i]->msg_c;
     }
     else
     {
         rc = find_empty_R(R);
-        cout << '\t' << "MOV" << '\t' << R[rc][0] << ",AX" << endl;
+        fout << '\t' << "MOV" << '\t' << R[rc][0] << ",AL" << endl;
+        cout << '\t' << "MOV" << '\t' << R[rc][0] << ",AL" << endl;
         R[rc][2] = quaters[*i]->msg_c;
         R[rc][1] = quaters[*i]->tc;
     }
@@ -1406,6 +1441,7 @@ void produce_finalcode_add(string a, string R[8][3], int* i)
     if (find_in_dseg(quaters[*i]->ta, &position) != -1)//如果还没有取出,函数返回值为在数据段的序号,顺便把这个数据从数据段删除(还没做)
     {
         ra = find_empty_R(R);
+        fout << '\t' << "MOV" << '\t' << R[ra][0] << "," << "[SI+" << 4 * position << "]" << endl;
         cout << '\t' << "MOV" << '\t' << R[ra][0] << "," << "[SI+" << 4 * position << "]" << endl;
         R[ra][2] = quaters[*i]->msg_a; //把存储ta的寄存器活跃状态设为1
         R[ra][1] = quaters[*i]->ta; //把存储ta的寄存器内容改为ta
@@ -1413,6 +1449,7 @@ void produce_finalcode_add(string a, string R[8][3], int* i)
     else if (is_con(quaters[*i]->ta))//如果操作数是常数
     {
         ra = find_empty_R(R);
+        fout << '\t' << "MOV" << '\t' << R[ra][0] << "," << quaters[*i]->ta << endl;
         cout << '\t' << "MOV" << '\t' << R[ra][0] << "," << quaters[*i]->ta << endl;
         R[ra][2] = quaters[*i]->msg_a;
     }
@@ -1423,31 +1460,37 @@ void produce_finalcode_add(string a, string R[8][3], int* i)
     }
     if (is_con(quaters[*i]->tb))//如果被操作数是常数
     {
+        fout << '\t' << a << '\t' << R[ra][0] << "," << quaters[*i]->tb << endl;
         cout << '\t' << a << '\t' << R[ra][0] << "," << quaters[*i]->tb << endl;
     }
     else if (find_in_dseg(quaters[*i]->tb, &position) != -1)
     {
+        fout << '\t' << a << '\t' << R[ra][0] << "," << "[SI+" << 4 * position << "]" << endl;
         cout << '\t' << a << '\t' << R[ra][0] << "," << "[SI+" << 4 * position << "]" << endl;
     }
     else if (find_R(R, quaters[*i]->tb)!=8)
     {
         rb = find_R(R, quaters[*i]->tb);
+        fout << '\t' << a << '\t' << R[ra][0] << "," << R[rb][0] << endl;
         cout << '\t' << a << '\t' << R[ra][0] << "," << R[rb][0] << endl;
         R[rb][2] = quaters[*i]->msg_b;
     }
     if (find_in_dseg(quaters[*i]->tc, &position) != -1)
     {
-        cout << '\t' << "MOV" << '\t' << "[SI+" << 2 * position << "]," << R[ra][0] << endl;
+        fout << '\t' << "MOV" << '\t' << "[SI+" << 4 * position << "]," << R[ra][0] << endl;
+        cout << '\t' << "MOV" << '\t' << "[SI+" << 4 * position << "]," << R[ra][0] << endl;
     }
     else if (find_R(R, quaters[*i]->tc)!=8)
     {
         rc = find_R(R, quaters[*i]->tc);
+        fout << '\t' << "MOV" << '\t' << R[rc][0] << "," << R[ra][0] << endl;
         cout << '\t' << "MOV" << '\t' << R[rc][0] << "," << R[ra][0] << endl;
         R[rc][2] = quaters[*i]->msg_c;
     }
     else
     {
         rc = find_empty_R(R);
+        fout << '\t' << "MOV" << '\t' << R[rc][0] << "," << R[ra][0] << endl;
         cout << '\t' << "MOV" << '\t' << R[rc][0] << "," << R[ra][0] << endl;
         R[rc][2] = quaters[*i]->msg_c;
         R[rc][1] = quaters[*i]->tc;
@@ -1464,6 +1507,7 @@ void produce_finalcode_if(string a, string R[8][3], int* i)
     if (find_in_dseg(quaters[*i]->ta, &position) != -1)//如果还没有取出,函数返回值为在数据段的序号,顺便把这个数据从数据段删除(还没做)
     {
         ra = find_empty_R(R);
+        fout << '\t' << "MOV" << '\t' << R[ra][0] << "," << "[SI+" << 4 * position << "]" << endl;
         cout << '\t' << "MOV" << '\t' << R[ra][0] << "," << "[SI+" << 4 * position << "]" << endl;
         R[ra][2] = quaters[*i]->msg_a; //把存储ta的寄存器活跃状态设为1
         R[ra][1] = quaters[*i]->ta; //把存储ta的寄存器内容改为ta
@@ -1471,6 +1515,7 @@ void produce_finalcode_if(string a, string R[8][3], int* i)
     else if (is_con(quaters[*i]->ta))//如果操作数是常数
     {
         ra = find_empty_R(R);
+        fout << '\t' << "MOV" << '\t' << R[ra][0] << "," << quaters[*i]->ta << endl;
         cout << '\t' << "MOV" << '\t' << R[ra][0] << "," << quaters[*i]->ta << endl;
         R[ra][2] = "0";
     }
@@ -1481,16 +1526,19 @@ void produce_finalcode_if(string a, string R[8][3], int* i)
     }
     if (is_con(quaters[*i]->tb))//如果被操作数是常数
     {
-        cout << '\t' << "CMP" << '\t' << R[ra][2] << quaters[*i]->tb << endl;
+        fout << '\t' << "CMP" << '\t' << R[ra][0] << quaters[*i]->tb << endl;
+        cout << '\t' << "CMP" << '\t' << R[ra][0] << quaters[*i]->tb << endl;
     }
     else if (find_in_dseg(quaters[*i]->tb, &position) != -1)
     {
-        cout << '\t' << "CMP" << '\t' << R[ra][1] << ",[SI+" << 4 * position << "]" << endl;
+        fout << '\t' << "CMP" << '\t' << R[ra][0] << ",[SI+" << 4 * position << "]" << endl;
+        cout << '\t' << "CMP" << '\t' << R[ra][0] << ",[SI+" << 4 * position << "]" << endl;
     }
     else if (find_R(R, quaters[*i]->tb) != 8)
     {
         rb = find_R(R, quaters[*i]->tb);
-        cout << '\t' << "CMP" << '\t' << "AL," << R[rb][0] << endl;
+        fout << '\t' << "CMP" << '\t' << R[ra][0] << "," << R[rb][0] << endl;
+        cout << '\t' << "CMP" << '\t' << R[ra][0]<<"," << R[rb][0] << endl;
     }
     if (find_in_dseg(R[ra][1], &position) != -1)
         R[ra][2] = "0";
@@ -1504,6 +1552,7 @@ int find_empty_R(string R[8][3])
             return i;
         }
     }
+    return 8;
 }
 int find_R(string R[8][3], string a)
 {
@@ -1542,17 +1591,21 @@ int find_in_dseg(string a,int *p)
 int produce_dseg(int i)
 {
     i++;
+    fout << "DSEG" << '\t' << "SEGMENT" << endl;
+    fout << "DATA" << '\t' << "DB" << '\t';
     cout << "DSEG" << '\t' << "SEGMENT" << endl;
     cout << "DATA" << '\t' << "DB" << '\t';
     while (quaters[i]->c != "data")
     {
         if (quaters[i]->c == "int" && quaters[i]->tc != "")
         {
+            fout << quaters[i]->tc << ",";
             cout << quaters[i]->tc << ",";
             dseg.push_back(quaters[i]->ta);
         }
         i++;
     }
+    fout << endl << "DSEG" << '\t' << "ENDS" << endl;
     cout << endl<< "DSEG" << '\t' << "ENDS" << endl;
     return i;
 }
